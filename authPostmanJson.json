@@ -1,0 +1,218 @@
+{
+    "info": {
+      "_postman_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "name": "E-commerce API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Auth",
+        "item": [
+          {
+            "name": "Register",
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"John Doe\",\n    \"email\": \"john@example.com\",\n    \"phone_number\": \"1234567890\",\n    \"address\": \"123 Main St\",\n    \"password\": \"password123\",\n    \"password_confirmation\": \"password123\",\n    \"role\": \"retailer\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{base_url}}/auth/register",
+                "host": ["{{base_url}}"],
+                "path": ["auth", "register"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Login",
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"john@example.com\",\n    \"password\": \"password123\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{base_url}}/auth/login",
+                "host": ["{{base_url}}"],
+                "path": ["auth", "login"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "User Profile",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/auth/user-profile",
+                "host": ["{{base_url}}"],
+                "path": ["auth", "user-profile"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Logout",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/auth/logout",
+                "host": ["{{base_url}}"],
+                "path": ["auth", "logout"]
+              }
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Users",
+        "item": [
+          {
+            "name": "Get All Users",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/users?role=retailer&per_page=5",
+                "host": ["{{base_url}}"],
+                "path": ["users"],
+                "query": [
+                  {
+                    "key": "role",
+                    "value": "retailer"
+                  },
+                  {
+                    "key": "per_page",
+                    "value": "5"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Block User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/users/2/block",
+                "host": ["{{base_url}}"],
+                "path": ["users", "2", "block"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Unblock User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/users/2/unblock",
+                "host": ["{{base_url}}"],
+                "path": ["users", "2", "unblock"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Update User",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"name\": \"John Updated\",\n    \"address\": \"456 New St\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{base_url}}/users/1",
+                "host": ["{{base_url}}"],
+                "path": ["users", "1"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Deactivate Account",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{auth_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/deactivate-account",
+                "host": ["{{base_url}}"],
+                "path": ["deactivate-account"]
+              }
+            },
+            "response": []
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8000/api"
+      },
+      {
+        "key": "auth_token",
+        "value": ""
+      }
+    ]
+  }
