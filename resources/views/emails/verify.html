@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Verification</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+               @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap; 
+        }
+        body {
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+        .code-input {
+            width: 3rem;
+            height: 3.5rem;
+            font-size: 1.5rem;
+            text-align: center;
+            margin: 0 0.25rem;
+        }
+        .code-input:focus {
+            outline: none;
+            outline-offset: 2px;
+        }
+        .countdown {
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="p-6 sm:p-8">
+            <!-- Header -->
+            <div class="text-center mb-6">
+                <h1 class="text-2xl font-bold text-gray-800">Verify Your Email</h1>
+                <p class="text-gray-600 mt-2">We've sent a 6-digit code to your email</p>
+            </div>
+
+            <!-- Success Message -->
+            <div id="successMessage" class="hidden mb-4 p-3 bg-green-50 text-green-700 rounded text-sm"></div>
+
+            <!-- Error Message -->
+            <div id="errorMessage" class="hidden mb-4 p-3 bg-red-50 text-red-700 rounded text-sm"></div>
+
+            <!-- Code Input Form -->
+            <form id="verificationForm" class="space-y-4">
+                <div class="flex justify-center">
+                    <input type="text" maxlength="1" class="code-input border border-gray-300 rounded focus:border-blue-500" 
+                           data-index="1" autofocus>
+                    <input type="text" maxlength="1" class="code-input border border-gray-300 rounded focus:border-blue-500" 
+                           data-index="2">
+                    <input type="text" maxlength="1" class="code-input border border-gray-300 rounded focus:border-blue-500" 
+                           data-index="3">
+                    <input type="text" maxlength="1" class="code-input border border-gray-300 rounded focus:border-blue-500" 
+                           data-index="4">
+                    <input type="text" maxlength="1" class="code-input border border-gray-300 rounded focus:border-blue-500" 
+                           data-index="5">
+                    <input type="text" maxlength="1" class="code-input border border-gray-300 rounded focus:border-blue-500" 
+                           data-index="6">
+                </div>
+                <input type="hidden" id="fullCode" name="code">
+
+                <div class="pt-2">
+                    <button type="submit" id="verifyButton" 
+                            class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Verify Email
+                    </button>
+                </div>
+            </form>
+
+            <!-- Resend Code -->
+            <div class="mt-4 text-center text-sm text-gray-600">
+                <p>Didn't receive a code? 
+                    <button id="resendButton" class="text-blue-600 hover:text-blue-500 focus:outline-none">
+                        Resend code
+                    </button>
+                    <span id="countdown" class="countdown hidden">(30s)</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for verification token on page load
+            const verificationToken = localStorage.getItem('verification_token');
+            if (!verificationToken) {
+                window.location.href = '/register';
+                return;
+            }
+
+            const inputs = document.querySelectorAll('.code-input');
+            const fullCodeInput = document.getElementById('fullCode');
+            const verificationForm = document.getElementById('verificationForm');
+            const resendButton = document.getElementById('resendButton');
+            const errorMessage = document.getElementById('errorMessage');
+            const successMessage = document.getElementById('successMessage');
+            const verifyButton = document.getElementById('verifyButton');
+            const countdownElement = document.getElementById('countdown');
+
+            // Handle input navigation
+            inputs.forEach((input, index) => {
+                // Move to next input when a digit is entered
+                input.addEventListener('input', function() {
+                    if (this.value.length === 1) {
+                        if (index < inputs.length - 1) {
+                            inputs[index + 1].focus();
+                        } else {
+                            this.blur();
+                        }
+                    }
+                    updateFullCode();
+                });
+
+                // Handle backspace to move to previous input
+                input.addEventListener('keydown', function(e) {
+                    if (e.key === 'Backspace' && this.value.length === 0) {
+                        if (index > 0) {
+                            inputs[index - 1].focus();
+                        }
+                    }
+                });
+            });
+
+            // Update the hidden input with the full code
+            function updateFullCode() {
+                let code = '';
+                inputs.forEach(input => {
+                    code += input.value;
+                });
+                fullCodeInput.value = code;
+            }
+
+            // Form submission
+            verificationForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                // Check if all digits are filled
+                const code = fullCodeInput.value;
+                if (code.length !== 6) {
+                    showError('Please enter the full 6-digit code');
+                    return;
+                }
+
+                verifyButton.disabled = true;
+                verifyButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Verifying...';
+
+                try {
+                    const token = localStorage.getItem('verification_token');
+                    if (!token) {
+                        throw new Error('Authentication token not found');
+                    }
+
+                    const response = await fetch('/api/verify-email', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            code: code
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Verification failed');
+                    }
+
+                    // Verification successful
+                    showSuccess('Email verified successfully! Redirecting...');
+                    
+                    // Remove verification token from local storage
+                    localStorage.removeItem('verification_token');
+                    
+                    // Redirect after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 2000);
+
+                } catch (error) {
+                    showError(error.message || 'An error occurred during verification');
+                    // Clear inputs on error
+                    inputs.forEach(input => input.value = '');
+                    inputs[0].focus();
+                } finally {
+                    verifyButton.disabled = false;
+                    verifyButton.textContent = 'Verify Email';
+                }
+            });
+
+            // Resend code functionality with countdown
+            let countdown = 30;
+            let countdownInterval;
+
+            function startCountdown() {
+                countdownElement.classList.remove('hidden');
+                resendButton.disabled = true;
+                countdown = 30;
+                updateCountdownText();
+                
+                countdownInterval = setInterval(() => {
+                    countdown--;
+                    updateCountdownText();
+                    
+                    if (countdown <= 0) {
+                        clearInterval(countdownInterval);
+                        resendButton.disabled = false;
+                        countdownElement.classList.add('hidden');
+                    }
+                }, 1000);
+            }
+
+            function updateCountdownText() {
+                countdownElement.textContent = `(${countdown}s)`;
+            }
+
+            // Start countdown on page load
+            startCountdown();
+
+            resendButton.addEventListener('click', async function() {
+                resendButton.disabled = true;
+                resendButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Sending...';
+
+                try {
+                    const token = localStorage.getItem('verification_token');
+                    if (!token) {
+                        throw new Error('Authentication token not found');
+                    }
+
+                    const response = await fetch('/api/resend-verification', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(data.message || 'Failed to resend code');
+                    }
+
+                    showSuccess('A new verification code has been sent to your email');
+                    // Clear inputs
+                    inputs.forEach(input => input.value = '');
+                    inputs[0].focus();
+                    resendButton.innerHTML = ' Sent';
+
+                    // Restart countdown
+                    startCountdown();
+
+                } catch (error) {
+                    showError(error.message || 'Failed to resend verification code');
+                    resendButton.disabled = false;
+                    resendButton.innerHTML = 'Resend code';
+                }
+            });
+
+            function showError(message) {
+                errorMessage.textContent = message;
+                errorMessage.classList.remove('hidden');
+                successMessage.classList.add('hidden');
+            }
+
+            function showSuccess(message) {
+                successMessage.textContent = message;
+                successMessage.classList.remove('hidden');
+                errorMessage.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>

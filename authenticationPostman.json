@@ -1,0 +1,358 @@
+{
+    "info": {
+      "_postman_id": "a1b2c3d4-e5f6-7890-g1h2-i3j4k5l6m7n8",
+      "name": "E-Commerce API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Auth",
+        "item": [
+          {
+            "name": "Register User",
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "name",
+                    "value": "John Doe",
+                    "type": "text"
+                  },
+                  {
+                    "key": "email",
+                    "value": "user@example.com",
+                    "type": "text"
+                  },
+                  {
+                    "key": "password",
+                    "value": "password123",
+                    "type": "text"
+                  },
+                  {
+                    "key": "password_confirmation",
+                    "value": "password123",
+                    "type": "text"
+                  },
+                  {
+                    "key": "phone_number",
+                    "value": "1234567890",
+                    "type": "text"
+                  },
+                  {
+                    "key": "address",
+                    "value": "123 Main St",
+                    "type": "text"
+                  },
+                  {
+                    "key": "role",
+                    "value": "user",
+                    "type": "text"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/register",
+                "host": ["{{base_url}}"],
+                "path": ["register"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Register Retailer",
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "formdata",
+                "formdata": [
+                  {
+                    "key": "name",
+                    "value": "Retailer Name",
+                    "type": "text"
+                  },
+                  {
+                    "key": "email",
+                    "value": "retailer@example.com",
+                    "type": "text"
+                  },
+                  {
+                    "key": "password",
+                    "value": "password123",
+                    "type": "text"
+                  },
+                  {
+                    "key": "password_confirmation",
+                    "value": "password123",
+                    "type": "text"
+                  },
+                  {
+                    "key": "phone_number",
+                    "value": "1234567890",
+                    "type": "text"
+                  },
+                  {
+                    "key": "address",
+                    "value": "123 Business Ave",
+                    "type": "text"
+                  },
+                  {
+                    "key": "role",
+                    "value": "retailer",
+                    "type": "text"
+                  },
+                  {
+                    "key": "business_name",
+                    "value": "My Business",
+                    "type": "text"
+                  },
+                  {
+                    "key": "tax_id",
+                    "value": "TAX123456",
+                    "type": "text"
+                  },
+                  {
+                    "key": "business_registration_image",
+                    "type": "file",
+                    "src": "/path/to/image.jpg"
+                  }
+                ]
+              },
+              "url": {
+                "raw": "{{base_url}}/register",
+                "host": ["{{base_url}}"],
+                "path": ["register"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Login",
+            "request": {
+              "method": "POST",
+              "header": [],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"email\": \"user@example.com\",\n    \"password\": \"password123\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{base_url}}/login",
+                "host": ["{{base_url}}"],
+                "path": ["login"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Verify Email",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{user_token}}"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n    \"code\": \"123456\"\n}",
+                "options": {
+                  "raw": {
+                    "language": "json"
+                  }
+                }
+              },
+              "url": {
+                "raw": "{{base_url}}/verify-email",
+                "host": ["{{base_url}}"],
+                "path": ["verify-email"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Resend Verification",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{user_token}}"
+                }
+              ],
+              "body": {},
+              "url": {
+                "raw": "{{base_url}}/resend-verification",
+                "host": ["{{base_url}}"],
+                "path": ["resend-verification"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Get Current User",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{user_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/me",
+                "host": ["{{base_url}}"],
+                "path": ["me"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Refresh Token",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{user_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/refresh-token",
+                "host": ["{{base_url}}"],
+                "path": ["refresh-token"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Logout",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{user_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/logout",
+                "host": ["{{base_url}}"],
+                "path": ["logout"]
+              }
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Admin",
+        "item": [
+          {
+            "name": "Get Users",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{admin_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/users?role=user&status=active",
+                "host": ["{{base_url}}"],
+                "path": ["users"],
+                "query": [
+                  {
+                    "key": "role",
+                    "value": "user"
+                  },
+                  {
+                    "key": "status",
+                    "value": "active"
+                  }
+                ]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Approve Retailer",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{admin_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/retailers/1/approve",
+                "host": ["{{base_url}}"],
+                "path": ["retailers", "1", "approve"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Block User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{admin_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/users/1/block",
+                "host": ["{{base_url}}"],
+                "path": ["users", "1", "block"]
+              }
+            },
+            "response": []
+          },
+          {
+            "name": "Unblock User",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{admin_token}}"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/users/1/unblock",
+                "host": ["{{base_url}}"],
+                "path": ["users", "1", "unblock"]
+              }
+            },
+            "response": []
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8000/api"
+      },
+      {
+        "key": "user_token",
+        "value": "your_user_jwt_token_here"
+      },
+      {
+        "key": "admin_token",
+        "value": "your_admin_jwt_token_here"
+      }
+    ]
+  }

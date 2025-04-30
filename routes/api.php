@@ -3,20 +3,23 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\UserController;
+use App\Http\Controllers\AdminController;
 
-Route::group(['prefix' => 'auth'], function () {
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/register', [AuthController::class, 'register']);
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+Route::post('/verify-email', [AuthController::class, 'verifyEmail'])->middleware('auth:api');
+Route::post('/resend-verification', [AuthController::class, 'resendVerification'])->middleware('auth:api');
+
+Route::middleware('jwt.auth')->group(function () {
+    Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    Route::post('/refresh', [AuthController::class, 'refresh']);
-    Route::get('/user-profile', [AuthController::class, 'userProfile']);
-});
-
-Route::group(['middleware' => 'auth:api'], function () {
-    Route::get('/users', [UserController::class, 'index']);
-    Route::post('/users/{id}/block', [UserController::class, 'blockUser']);
-    Route::post('/users/{id}/unblock', [UserController::class, 'unblockUser']);
-    Route::put('/users/{id}', [UserController::class, 'update']);
-    Route::post('/deactivate-account', [UserController::class, 'deactivateAccount']);
+    Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
+    
+    // Admin routes
+    Route::middleware(['jwt.auth:admin'])->group(function () {
+        Route::get('/users', [AdminController::class, 'getUsers']);
+        Route::post('/retailers/{id}/approve', [AdminController::class, 'approveRetailer']);
+        Route::post('/users/{id}/block', [AdminController::class, 'blockUser']);
+        Route::post('/users/{id}/unblock', [AdminController::class, 'unblockUser']);
+    });
 });

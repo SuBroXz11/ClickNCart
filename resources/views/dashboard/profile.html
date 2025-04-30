@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | Mosivta</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./navbar.js" defer></script>
+    <style>
+         @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap; 
+        }
+        body {
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+        .profile-card {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div id="app" class="min-h-screen flex">
+        <!-- Vertical Sidebar Navbar -->
+        <custom-navbar></custom-navbar>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <div class="max-w-4xl mx-auto">
+                <h1 class="text-2xl font-semibold text-gray-800 mb-6">My Profile</h1>
+                
+                <!-- Profile Card -->
+                <div id="profileContainer" class="bg-white rounded-lg profile-card p-6">
+                    <div class="animate-pulse flex space-x-4">
+                        <div class="flex-1 space-y-4 py-1">
+                            <div class="h-6 bg-gray-200 rounded w-3/4"></div>
+                            <div class="space-y-2">
+                                <div class="h-4 bg-gray-200 rounded"></div>
+                                <div class="h-4 bg-gray-200 rounded w-5/6"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async function() {
+            // Check for auth token
+            const authToken = localStorage.getItem('auth_token');
+            
+            if (!authToken) {
+                window.location.href = '/';
+                return;
+            }
+
+            try {
+                // Fetch user data
+                const response = await fetch('/api/me', {
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`
+                    }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        localStorage.removeItem('auth_token');
+                        window.location.href = '/';
+                        return;
+                    }
+                    throw new Error('Failed to fetch profile data');
+                }
+
+                const userData = await response.json();
+                renderProfile(userData);
+
+            } catch (error) {
+                console.error('Error:', error);
+                document.getElementById('profileContainer').innerHTML = `
+                    <div class="text-center py-8">
+                        <p class="text-red-500">Failed to load profile data. Please try again.</p>
+                    </div>
+                `;
+            }
+
+            function renderProfile(data) {
+                const formattedDate = new Date(data.created_at).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                document.getElementById('profileContainer').innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- Basic Info -->
+                        <div class="md:col-span-2">
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">Personal Information</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Full Name</p>
+                                    <p class="font-medium">${data.name || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Email</p>
+                                    <p class="font-medium">${data.email}</p>
+                                    ${data.email_verified_at ? 
+                                        '<span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full ">Verified</span>' : 
+                                        '<span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full ">Unverified</span>'}
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Phone Number</p>
+                                    <p class="font-medium">${data.phone_number || 'Not provided'}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Address</p>
+                                    <p class="font-medium">${data.address || 'Not provided'}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Account Info -->
+                        <div>
+                            <h2 class="text-xl font-semibold text-gray-800 mb-4">Account Information</h2>
+                            <div class="space-y-4">
+                                <div>
+                                    <p class="text-sm text-gray-500">Account Status</p>
+                                    <p class="font-medium capitalize">${data.status}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">User Role</p>
+                                    <p class="font-medium capitalize">${data.role}</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-500">Member Since</p>
+                                    <p class="font-medium">${formattedDate}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    ${data.business_name || data.tax_id ? `
+                    <!-- Business Info (only shown if exists) -->
+                    <div class="mt-8 pt-6 border-t border-gray-100">
+                        <h2 class="text-xl font-semibold text-gray-800 mb-4">Business Information</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            ${data.business_name ? `
+                            <div>
+                                <p class="text-sm text-gray-500">Business Name</p>
+                                <p class="font-medium">${data.business_name}</p>
+                            </div>
+                            ` : ''}
+                            ${data.tax_id ? `
+                            <div>
+                                <p class="text-sm text-gray-500">Tax ID</p>
+                                <p class="font-medium">${data.tax_id}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+            }
+        });
+    </script>
+</body>
+</html>
