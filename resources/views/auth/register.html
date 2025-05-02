@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+    <style>
+         @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap; 
+        }
+        body {
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .form-container {
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        .profile-preview {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #e2e8f0;
+        }
+        @media (max-width: 768px) {
+            .split-layout {
+                flex-direction: column;
+            }
+            .form-section, .image-section {
+                width: 100% !important;
+            }
+        }
+
+        .form-section {
+    -ms-overflow-style: none;  
+    scrollbar-width: none;     
+}
+
+.form-section::-webkit-scrollbar {
+    display: none;
+}
+    </style>
+</head>
+<body class="min-h-screen bg-white">
+    <div class="flex split-layout h-screen">
+        <!-- Left Section - Form (60%) -->
+        <div class="w-full md:w-1/2 form-section overflow-y-auto">
+            <div class=" mx-auto  p-6 bg-white ">
+                <!-- Tabs -->
+                <div class="flex border-b mb-6">
+                    <button id="userTab" class="flex-1 py-3 px-4 text-center font-medium border-b-2 border-blue-600 text-blue-600">
+                        User Registration
+                    </button>
+                    <button id="retailerTab" class="flex-1 py-3 px-4 text-center font-medium text-gray-500">
+                        Retailer Registration
+                    </button>
+                </div>
+
+                <!-- Error Display -->
+                <div id="errorDisplay" class="hidden mb-4 p-3 bg-red-50 text-red-600 text-sm rounded"></div>
+                
+                <!-- Success Message -->
+                <div id="successDisplay" class="hidden mb-4 p-3 bg-green-50 text-green-600 text-sm rounded"></div>
+
+                <!-- User Registration Form -->
+                <form id="userForm" class="space-y-4">
+                    <!-- Profile Picture -->
+                    <div class="flex flex-col items-center mb-4">
+                        <div class="relative">
+                            <img id="userProfilePreview" src="https://i.pinimg.com/736x/87/14/55/8714556a52021ba3a55c8e7a3547d28c.jpg" alt="Profile" 
+                                 class="profile-preview rounded-full object-cover">
+                            <label for="user_profile_picture" class="absolute bottom-0 right-0 bg-gray-200 text-gray-700 rounded-full h-8 w-8 cursor-pointer hover:bg-gray-300">
+                                <i class="fas fa-camera text-sm ml-2 mt-1.5"></i>
+                                <input type="file" id="user_profile_picture" name="profile_picture" accept="image/*" class="hidden">
+                            </label>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-2">Optional</p>
+                    </div>
+
+                    <!-- Form Rows -->
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="user_name" class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" id="user_name" name="name" required placeholder="John Doe"
+                                class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                            <p class="text-xs text-gray-500 mt-1">Your full name as it appears on official documents</p>
+                            <span id="user_name_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <div>
+                            <label for="user_email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" id="user_email" name="email" required placeholder="john@example.com"
+                                class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                            <p class="text-xs text-gray-500 mt-1">We'll send a verification link to this email</p>
+                            <span id="user_email_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="user_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="user_password" name="password" required placeholder="••••••••"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                                <span id="user_password_error" class="text-red-500 text-xs hidden"></span>
+                            </div>
+
+                            <div>
+                                <label for="user_password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                                <input type="password" id="user_password_confirmation" name="password_confirmation" required placeholder="••••••••"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="user_phone_number" class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
+                                <input type="text" id="user_phone_number" name="phone_number" required placeholder="+1234567890"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                                <span id="user_phone_number_error" class="text-red-500 text-xs hidden"></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="user_address" class="block text-sm font-medium text-gray-700 mb-1">Address</label>
+                            <textarea id="user_address" name="address" required placeholder="123 Main St, City, Country"
+                                class="w-full p-2 border border-gray-300 rounded focus:ring-0" rows="2"></textarea>
+                            <span id="user_address_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Register as User
+                    </button>
+                </form>
+
+                <!-- Retailer Registration Form -->
+                <form id="retailerForm" class="space-y-4 hidden">
+                    <!-- Profile Picture -->
+                    <div class="flex flex-col items-center mb-4">
+                        <div class="relative">
+                            <img id="retailerProfilePreview" src="https://i.pinimg.com/736x/87/14/55/8714556a52021ba3a55c8e7a3547d28c.jpg" alt="Profile" 
+                                 class="profile-preview rounded-full object-cover">
+                            <label for="retailer_profile_picture" class="absolute bottom-0 right-0 bg-gray-200 text-gray-700 rounded-full w-8 h-8 cursor-pointer hover:bg-gray-300">
+                                <i class="fas fa-camera text-sm ml-2 mt-1.5"></i>
+                                <input type="file" id="retailer_profile_picture" name="profile_picture" accept="image/*" class="hidden">
+                            </label>
+                        </div>
+                        <p class="text-gray-500 text-xs mt-2">Optional</p>
+                    </div>
+
+                    <!-- Form Rows -->
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label for="retailer_name" class="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
+                            <input type="text" id="retailer_name" name="name" required placeholder="John Doe"
+                                class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                            <p class="text-xs text-gray-500 mt-1">Primary contact for the business</p>
+                            <span id="retailer_name_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <div>
+                            <label for="retailer_email" class="block text-sm font-medium text-gray-700 mb-1">Business Email</label>
+                            <input type="email" id="retailer_email" name="email" required placeholder="contact@business.com"
+                                class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                            <span id="retailer_email_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="retailer_password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                                <input type="password" id="retailer_password" name="password" required placeholder="••••••••"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                                <span id="retailer_password_error" class="text-red-500 text-xs hidden"></span>
+                            </div>
+
+                            <div>
+                                <label for="retailer_password_confirmation" class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                                <input type="password" id="retailer_password_confirmation" name="password_confirmation" required placeholder="••••••••"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="retailer_phone_number" class="block text-sm font-medium text-gray-700 mb-1">Business Phone</label>
+                                <input type="text" id="retailer_phone_number" name="phone_number" required placeholder="+1234567890"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                                <span id="retailer_phone_number_error" class="text-red-500 text-xs hidden"></span>
+                            </div>
+
+                            <div>
+                                <label for="retailer_business_name" class="block text-sm font-medium text-gray-700 mb-1">Business Name</label>
+                                <input type="text" id="retailer_business_name" name="business_name" required placeholder="Acme Inc."
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                                <span id="retailer_business_name_error" class="text-red-500 text-xs hidden"></span>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label for="retailer_tax_id" class="block text-sm font-medium text-gray-700 mb-1">Tax ID</label>
+                                <input type="text" id="retailer_tax_id" name="tax_id" required placeholder="123-45-6789"
+                                    class="w-full p-2 border border-gray-300 rounded focus:ring-0">
+                                <span id="retailer_tax_id_error" class="text-red-500 text-xs hidden"></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label for="retailer_address" class="block text-sm font-medium text-gray-700 mb-1">Business Address</label>
+                            <textarea id="retailer_address" name="address" required placeholder="123 Business Ave, City, Country"
+                                class="w-full p-2 border border-gray-300 rounded focus:ring-0" rows="2"></textarea>
+                            <span id="retailer_address_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Business Registration Document</label>
+                            <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border border-gray-300 rounded">
+                                <div class="space-y-1 text-center">
+                                    <div class="flex text-sm text-gray-600 justify-center">
+                                        <label for="retailer_business_registration_image" class="cursor-pointer">
+                                            <span class="font-medium text-blue-600 hover:text-blue-500">Upload document</span>
+                                            <input id="retailer_business_registration_image" name="business_registration_image" type="file" accept="image/*,application/pdf" required class="sr-only">
+                                        </label>
+                                    </div>
+                                    <p class="text-xs text-gray-500">PDF, JPG, PNG up to 5MB</p>
+                                </div>
+                            </div>
+                            <span id="retailer_business_registration_image_error" class="text-red-500 text-xs hidden"></span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Register as Retailer
+                    </button>
+                </form>
+
+                <div class="mt-4 text-center text-sm text-gray-500">
+                    <p>Already have an account? <a href="#" class="text-blue-600 hover:text-blue-500">Sign in</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Section - Image (40%) -->
+        <div class="hidden md:block md:w-1/2 image-section bg-gray-100">
+            <img src="https://cdn.pixabay.com/photo/2018/02/06/22/43/painting-3135875_1280.jpg" 
+                 alt="Registration" class="w-full h-full object-cover">
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Tab switching
+            const userTab = document.getElementById('userTab');
+            const retailerTab = document.getElementById('retailerTab');
+            const userForm = document.getElementById('userForm');
+            const retailerForm = document.getElementById('retailerForm');
+
+            function activateUserTab() {
+                userTab.classList.add('border-blue-600', 'text-blue-600');
+                userTab.classList.remove('text-gray-500');
+                retailerTab.classList.remove('border-blue-600', 'text-blue-600');
+                retailerTab.classList.add('text-gray-500');
+                userForm.classList.remove('hidden');
+                retailerForm.classList.add('hidden');
+            }
+
+            function activateRetailerTab() {
+                retailerTab.classList.add('border-blue-600', 'text-blue-600');
+                retailerTab.classList.remove('text-gray-500');
+                userTab.classList.remove('border-blue-600', 'text-blue-600');
+                userTab.classList.add('text-gray-500');
+                retailerForm.classList.remove('hidden');
+                userForm.classList.add('hidden');
+            }
+
+            userTab.addEventListener('click', activateUserTab);
+            retailerTab.addEventListener('click', activateRetailerTab);
+
+            // Profile picture preview
+            function setupProfilePreview(inputId, previewId) {
+                const input = document.getElementById(inputId);
+                const preview = document.getElementById(previewId);
+                
+                input.addEventListener('change', function() {
+                    if (this.files && this.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            preview.src = e.target.result;
+                        }
+                        reader.readAsDataURL(this.files[0]);
+                    }
+                });
+                
+                preview.addEventListener('click', function() {
+                    input.click();
+                });
+            }
+
+            setupProfilePreview('user_profile_picture', 'userProfilePreview');
+            setupProfilePreview('retailer_profile_picture', 'retailerProfilePreview');
+
+            // Form submission
+            const errorDisplay = document.getElementById('errorDisplay');
+            const successDisplay = document.getElementById('successDisplay');
+
+            // Clear all error messages
+            function clearErrors() {
+                document.querySelectorAll('[id$="_error"]').forEach(el => {
+                    el.classList.add('hidden');
+                });
+                errorDisplay.classList.add('hidden');
+                errorDisplay.textContent = '';
+            }
+
+            // Display field-specific errors
+            function displayFieldErrors(errors) {
+                clearErrors();
+                
+                for (const [field, messages] of Object.entries(errors)) {
+                    const errorElement = document.getElementById(`${field}_error`);
+                    if (errorElement) {
+                        errorElement.textContent = messages[0];
+                        errorElement.classList.remove('hidden');
+                    }
+                }
+            }
+
+            // Display general error
+            function displayGeneralError(message) {
+                errorDisplay.textContent = message;
+                errorDisplay.classList.remove('hidden');
+            }
+
+            // Display success message
+            function displaySuccess(message, isRetailer = false) {
+                successDisplay.textContent = message;
+                successDisplay.classList.remove('hidden');
+                
+                setTimeout(() => {
+                    if (isRetailer) {
+                        window.location.href = '/home'; // Redirect retailer to home
+                    } else {
+                        window.location.href = '/verify-email'; // Redirect user to verification
+                    }
+                }, 2000);
+            }
+
+            // User form submission
+            userForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearErrors();
+    
+    const formData = new FormData();
+    formData.append('name', document.getElementById('user_name').value);
+    formData.append('email', document.getElementById('user_email').value);
+    formData.append('password', document.getElementById('user_password').value);
+    formData.append('password_confirmation', document.getElementById('user_password_confirmation').value);
+    formData.append('phone_number', document.getElementById('user_phone_number').value);
+    formData.append('address', document.getElementById('user_address').value);
+    
+    const profilePicture = document.getElementById('user_profile_picture').files[0];
+    if (profilePicture) {
+        formData.append('profile_picture', profilePicture);
+    }
+    
+    formData.append('role', 'user');
+
+    try {
+        const response = await fetch('api/register', {
+            method: 'POST',
+            body: formData
+        });
+
+        const data = await response.json();
+      
+
+        if (!response.ok) {
+            if (data.errors) {
+                displayFieldErrors(data.errors);
+            } else {
+                displayGeneralError(data.message || 'Registration failed. Please try again.');
+            }
+        } else {
+            console.log(data)
+            // Save the verification token to localStorage
+            if (data.token) {
+                localStorage.setItem("verification_token", data.token);
+                console.log('Token saved to localStorage:', data.token);
+            }
+            
+            displaySuccess('User registration successful! Redirecting to verification...', false);
+            userForm.reset();
+        }
+    } catch (error) {
+        displayGeneralError('Network error. Please try again.');
+        console.error('Error:', error);
+    }
+});
+            // Retailer form submission
+            retailerForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                clearErrors();
+                
+                const formData = new FormData();
+                formData.append('name', document.getElementById('retailer_name').value);
+                formData.append('email', document.getElementById('retailer_email').value);
+                formData.append('password', document.getElementById('retailer_password').value);
+                formData.append('password_confirmation', document.getElementById('retailer_password_confirmation').value);
+                formData.append('phone_number', document.getElementById('retailer_phone_number').value);
+                formData.append('address', document.getElementById('retailer_address').value);
+                formData.append('business_name', document.getElementById('retailer_business_name').value);
+                formData.append('tax_id', document.getElementById('retailer_tax_id').value);
+                
+                const businessDoc = document.getElementById('retailer_business_registration_image').files[0];
+                if (businessDoc) {
+                    formData.append('business_registration_image', businessDoc);
+                }
+                
+                const profilePicture = document.getElementById('retailer_profile_picture').files[0];
+                if (profilePicture) {
+                    formData.append('profile_picture', profilePicture);
+                }
+                
+                formData.append('role', 'retailer');
+
+                try {
+                    const response = await fetch('api/register', {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    const data = await response.json();
+
+                    if (!response.ok) {
+                        if (data.errors) {
+                            displayFieldErrors(data.errors);
+                        } else {
+                            displayGeneralError(data.message || 'Registration failed. Please try again.');
+                        }
+                    } else {
+                        displaySuccess('Retailer registration successful! Redirecting to home...', true);
+                        retailerForm.reset();
+                    }
+                } catch (error) {
+                    displayGeneralError('Network error. Please try again.');
+                    console.error('Error:', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

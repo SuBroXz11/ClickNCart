@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="./navbar.js" defer></script>
+    <style>
+     @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap; 
+        }
+        body {
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div id="app" class="min-h-screen flex">
+        <!-- Vertical Sidebar Navbar -->
+        <custom-navbar></custom-navbar>
+
+        <!-- Main Content -->
+        <main class="flex-1 ml-64 p-8">
+            <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl">
+                <h2 class="text-3xl font-semibold text-gray-800 mb-2">Welcome to the Dashboard</h2>
+                <p class="text-gray-600">You're successfully authenticated to the Dashboard.</p>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for auth token
+            const authToken = localStorage.getItem('auth_token');
+            
+            if (!authToken) {
+                window.location.href = '/';
+                return;
+            }
+
+            // Set active nav item
+            function setActiveNavItem(buttonId) {
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                const activeBtn = document.getElementById(buttonId);
+                if (activeBtn) activeBtn.classList.add('active');
+            }
+
+            // Set up navigation buttons
+            document.getElementById('dashboardBtn')?.addEventListener('click', () => {
+                setActiveNavItem('dashboardBtn');
+                window.location.href = '/dashboard';
+            });
+
+            document.getElementById('tradersBtn')?.addEventListener('click', () => {
+                setActiveNavItem('tradersBtn');
+                window.location.href = '/traders';
+            });
+
+            document.getElementById('usersBtn')?.addEventListener('click', () => {
+                setActiveNavItem('usersBtn');
+                window.location.href = '/users';
+            });
+
+            // Set up logout button with API call
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async function() {
+                    try {
+                        const response = await fetch('/api/logout', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            localStorage.removeItem('auth_token');
+                            window.location.href = '/';
+                        } else {
+                            console.error('Logout failed:', await response.json());
+                            alert('Logout failed. Please try again.');
+                        }
+                    } catch (error) {
+                        console.error('Error during logout:', error);
+                        alert('An error occurred during logout.');
+                    }
+                });
+            }
+
+            // Set dashboard as active by default
+            setActiveNavItem('dashboardBtn');
+        });
+    </script>
+</body>
+</html>
