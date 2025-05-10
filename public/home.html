@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Modern E-Commerce</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        .product-card {
+            transition: all 0.3s ease;
+        }
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .filter-section {
+            transition: all 0.3s ease;
+        }
+        .filter-section:hover {
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .filter-option:hover {
+            background-color: #f3f4f6;
+        }
+        .filter-chip {
+            transition: all 0.2s ease;
+        }
+        .filter-chip:hover {
+            transform: scale(1.05);
+        }
+        .filter-chip.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .skeleton-loader {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-20">
+        <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">ShopEasy</h1>
+            <div class="relative w-1/3">
+                <input type="text" id="searchInput" placeholder="Search products..." 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="searchBtn" class="absolute right-2 top-2 text-gray-500 hover:text-blue-600">
+                    <i class="fas fa-search"></i>
+                </button>
+            </div>
+            <div class="flex items-center space-x-4">
+                <button class="p-2 text-gray-700 hover:text-blue-600">
+                    <i class="fas fa-heart text-xl"></i>
+                </button>
+                <button class="p-2 text-gray-700 hover:text-blue-600 relative">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span class="absolute -top-1 -right-1 bg-blue-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">3</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8 flex">
+        <!-- Filters Sidebar -->
+        <aside class="w-64 mr-8 flex-shrink-0 hidden lg:block">
+            <div class="bg-white rounded-lg shadow-sm p-4 sticky top-24">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">Filters</h2>
+                    <button id="clearAllFilters" class="text-sm text-blue-600 hover:text-blue-800">Clear all</button>
+                </div>
+                
+                <!-- Category Filter -->
+                <div class="filter-section mb-6 border-b pb-4">
+                    <h3 class="font-medium text-gray-700 mb-3 flex justify-between items-center">
+                        <span>Categories</span>
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </h3>
+                    <div id="categoryFilters" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Categories will be loaded here -->
+                        <div class="skeleton-loader h-4 w-full rounded"></div>
+                        <div class="skeleton-loader h-4 w-3/4 rounded"></div>
+                        <div class="skeleton-loader h-4 w-2/3 rounded"></div>
+                    </div>
+                </div>
+                
+                <!-- Price Filter -->
+                <div class="filter-section mb-6 border-b pb-4">
+                    <h3 class="font-medium text-gray-700 mb-3">Price Range</h3>
+                    <div class="px-1">
+                        <div class="flex justify-between mb-2">
+                            <span class="text-sm text-gray-600">$<span id="minPriceValue">0</span></span>
+                            <span class="text-sm text-gray-600">$<span id="maxPriceValue">1000</span></span>
+                        </div>
+                        <div class="space-y-4">
+                            <input type="range" id="priceRangeMin" min="0" max="1000" value="0" class="w-full">
+                            <input type="range" id="priceRangeMax" min="0" max="1000" value="1000" class="w-full">
+                        </div>
+                        <button id="applyPriceFilter" class="mt-3 w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Apply Price
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Rating Filter -->
+                <div class="filter-section mb-6 border-b pb-4">
+                    <h3 class="font-medium text-gray-700 mb-3">Customer Rating</h3>
+                    <div class="space-y-2">
+                        <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                            <input type="checkbox" id="rating4" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                            <label for="rating4" class="flex items-center cursor-pointer">
+                                <span class="flex text-yellow-400 mr-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span>& Up</span>
+                            </label>
+                        </div>
+                        <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                            <input type="checkbox" id="rating3" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                            <label for="rating3" class="flex items-center cursor-pointer">
+                                <span class="flex text-yellow-400 mr-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span>& Up</span>
+                            </label>
+                        </div>
+                        <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                            <input type="checkbox" id="rating2" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                            <label for="rating2" class="flex items-center cursor-pointer">
+                                <span class="flex text-yellow-400 mr-2">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                    <i class="far fa-star"></i>
+                                </span>
+                                <span>& Up</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Brand Filter -->
+                <div class="filter-section mb-6 border-b pb-4">
+                    <h3 class="font-medium text-gray-700 mb-3 flex justify-between items-center">
+                        <span>Brands</span>
+                        <i class="fas fa-chevron-down text-xs"></i>
+                    </h3>
+                    <div id="brandFilters" class="space-y-2 max-h-60 overflow-y-auto">
+                        <!-- Brands will be loaded here -->
+                        <div class="skeleton-loader h-4 w-full rounded"></div>
+                        <div class="skeleton-loader h-4 w-3/4 rounded"></div>
+                        <div class="skeleton-loader h-4 w-2/3 rounded"></div>
+                    </div>
+                </div>
+                
+                <!-- Availability Filter -->
+                <div class="filter-section mb-6">
+                    <h3 class="font-medium text-gray-700 mb-3">Availability</h3>
+                    <div class="space-y-2">
+                        <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                            <input type="checkbox" id="inStock" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                            <label for="inStock" class="cursor-pointer">In Stock</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <!-- Mobile Filters Button -->
+        <div class="lg:hidden fixed bottom-6 right-6 z-10">
+            <button id="mobileFiltersBtn" class="p-4 bg-blue-600 text-white rounded-full shadow-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-filter text-xl"></i>
+            </button>
+        </div>
+        
+        <!-- Mobile Filters Sidebar -->
+        <div id="mobileFiltersSidebar" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden">
+            <div class="absolute right-0 top-0 h-full w-4/5 bg-white overflow-y-auto">
+                <div class="p-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-gray-800">Filters</h2>
+                        <button id="closeMobileFilters" class="p-2 text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Mobile filters content (same as desktop but adjusted) -->
+                    <div class="filter-section mb-6 border-b pb-4">
+                        <h3 class="font-medium text-gray-700 mb-3">Categories</h3>
+                        <div id="mobileCategoryFilters" class="space-y-2">
+                            <!-- Categories will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section mb-6 border-b pb-4">
+                        <h3 class="font-medium text-gray-700 mb-3">Price Range</h3>
+                        <div class="px-1">
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm text-gray-600">$<span id="mobileMinPriceValue">0</span></span>
+                                <span class="text-sm text-gray-600">$<span id="mobileMaxPriceValue">1000</span></span>
+                            </div>
+                            <div class="space-y-4">
+                                <input type="range" id="mobilePriceRangeMin" min="0" max="1000" value="0" class="w-full">
+                                <input type="range" id="mobilePriceRangeMax" min="0" max="1000" value="1000" class="w-full">
+                            </div>
+                            <button id="mobileApplyPriceFilter" class="mt-3 w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                                Apply Price
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section mb-6 border-b pb-4">
+                        <h3 class="font-medium text-gray-700 mb-3">Customer Rating</h3>
+                        <div class="space-y-2">
+                            <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                                <input type="checkbox" id="mobileRating4" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                                <label for="mobileRating4" class="flex items-center cursor-pointer">
+                                    <span class="flex text-yellow-400 mr-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                    </span>
+                                    <span>& Up</span>
+                                </label>
+                            </div>
+                            <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                                <input type="checkbox" id="mobileRating3" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                                <label for="mobileRating3" class="flex items-center cursor-pointer">
+                                    <span class="flex text-yellow-400 mr-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                    </span>
+                                    <span>& Up</span>
+                                </label>
+                            </div>
+                            <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                                <input type="checkbox" id="mobileRating2" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                                <label for="mobileRating2" class="flex items-center cursor-pointer">
+                                    <span class="flex text-yellow-400 mr-2">
+                                        <i class="fas fa-star"></i>
+                                        <i class="fas fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                        <i class="far fa-star"></i>
+                                    </span>
+                                    <span>& Up</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section mb-6 border-b pb-4">
+                        <h3 class="font-medium text-gray-700 mb-3">Brands</h3>
+                        <div id="mobileBrandFilters" class="space-y-2">
+                            <!-- Brands will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="filter-section mb-6">
+                        <h3 class="font-medium text-gray-700 mb-3">Availability</h3>
+                        <div class="space-y-2">
+                            <div class="filter-option flex items-center p-2 rounded cursor-pointer">
+                                <input type="checkbox" id="mobileInStock" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                                <label for="mobileInStock" class="cursor-pointer">In Stock</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button id="mobileClearFilters" class="flex-1 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                            Clear All
+                        </button>
+                        <button id="mobileApplyFilters" class="flex-1 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            Apply
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Products Section -->
+        <section class="flex-1">
+            <!-- Active Filters -->
+            <div id="activeFilters" class="flex flex-wrap gap-2 mb-6">
+                <!-- Filter chips will appear here -->
+            </div>
+            
+            <!-- Products Grid -->
+            <div id="productsGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Skeleton loaders for initial loading -->
+                <div class="product-card bg-white rounded-lg overflow-hidden shadow-md border border-gray-100">
+                    <div class="relative pb-[100%] overflow-hidden">
+                        <div class="skeleton-loader absolute h-full w-full"></div>
+                    </div>
+                    <div class="p-4">
+                        <div class="skeleton-loader h-5 w-3/4 mb-2 rounded"></div>
+                        <div class="skeleton-loader h-4 w-1/2 mb-3 rounded"></div>
+                        <div class="skeleton-loader h-6 w-1/3 rounded"></div>
+                    </div>
+                </div>
+                <div class="product-card bg-white rounded-lg overflow-hidden shadow-md border border-gray-100">
+                    <div class="relative pb-[100%] overflow-hidden">
+                        <div class="skeleton-loader absolute h-full w-full"></div>
+                    </div>
+                    <div class="p-4">
+                        <div class="skeleton-loader h-5 w-3/4 mb-2 rounded"></div>
+                        <div class="skeleton-loader h-4 w-1/2 mb-3 rounded"></div>
+                        <div class="skeleton-loader h-6 w-1/3 rounded"></div>
+                    </div>
+                </div>
+                <div class="product-card bg-white rounded-lg overflow-hidden shadow-md border border-gray-100">
+                    <div class="relative pb-[100%] overflow-hidden">
+                        <div class="skeleton-loader absolute h-full w-full"></div>
+                    </div>
+                    <div class="p-4">
+                        <div class="skeleton-loader h-5 w-3/4 mb-2 rounded"></div>
+                        <div class="skeleton-loader h-4 w-1/2 mb-3 rounded"></div>
+                        <div class="skeleton-loader h-6 w-1/3 rounded"></div>
+                    </div>
+                </div>
+                <div class="product-card bg-white rounded-lg overflow-hidden shadow-md border border-gray-100">
+                    <div class="relative pb-[100%] overflow-hidden">
+                        <div class="skeleton-loader absolute h-full w-full"></div>
+                    </div>
+                    <div class="p-4">
+                        <div class="skeleton-loader h-5 w-3/4 mb-2 rounded"></div>
+                        <div class="skeleton-loader h-4 w-1/2 mb-3 rounded"></div>
+                        <div class="skeleton-loader h-6 w-1/3 rounded"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Loading Indicator -->
+            <div id="loadingIndicator" class="flex justify-center py-8 hidden">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+            </div>
+            
+            <!-- No Products Message -->
+            <div id="noProductsMessage" class="text-center py-12 hidden">
+                <i class="fas fa-box-open text-5xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-medium text-gray-500">No products found</h3>
+                <p class="text-gray-400 mt-2">Try adjusting your filters or search term</p>
+                <button id="resetFiltersBtn" class="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Reset Filters
+                </button>
+            </div>
+            
+            <!-- Pagination -->
+            <div id="pagination" class="flex justify-center mt-8 hidden">
+                <nav class="inline-flex rounded-md shadow">
+                    <button id="prevPage" class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    <div class="flex">
+                        <span class="px-3 py-2 border-t border-b border-gray-300 bg-white text-gray-700">
+                            Page <span id="currentPage">1</span>
+                        </span>
+                    </div>
+                    <button id="nextPage" class="px-3 py-2 rounded-r-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </nav>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // Current filters state
+        let currentFilters = {
+            category: null,
+            subcategory: null,
+            brand: null,
+            minPrice: 0,
+            maxPrice: 1000,
+            minRating: null,
+            inStock: false,
+            searchQuery: null,
+            page: 1,
+            perPage: 12
+        };
+        
+        // Available filters from API
+        let availableFilters = {
+            categories: [],
+            subcategories: [],
+            brands: [],
+            priceRange: { min: 0, max: 1000 }
+        };
+        
+        // DOM elements
+        const productsGrid = document.getElementById('productsGrid');
+        const activeFiltersContainer = document.getElementById('activeFilters');
+        const noProductsMessage = document.getElementById('noProductsMessage');
+        const loadingIndicator = document.getElementById('loadingIndicator');
+        const searchInput = document.getElementById('searchInput');
+        const searchBtn = document.getElementById('searchBtn');
+        const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+        const clearAllFiltersBtn = document.getElementById('clearAllFilters');
+        const pagination = document.getElementById('pagination');
+        const currentPage = document.getElementById('currentPage');
+        const prevPage = document.getElementById('prevPage');
+        const nextPage = document.getElementById('nextPage');
+        
+        // Mobile filter elements
+        const mobileFiltersBtn = document.getElementById('mobileFiltersBtn');
+        const mobileFiltersSidebar = document.getElementById('mobileFiltersSidebar');
+        const closeMobileFilters = document.getElementById('closeMobileFilters');
+        const mobileApplyFilters = document.getElementById('mobileApplyFilters');
+        const mobileClearFiltersBtn = document.getElementById('mobileClearFilters');
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', async () => {
+            // First, fetch available filters
+            await fetchAvailableFilters();
+            
+            // Then load initial products (default category)
+            fetchProducts();
+            
+            // Setup event listeners
+            setupEventListeners();
+        });
+        
+        // Fetch available filters from API
+        async function fetchAvailableFilters() {
+            try {
+                const response = await fetch('/api/products/filters');
+                const data = await response.json();
+                
+                if (data.success) {
+                    availableFilters = {
+                        categories: data.data.categories || [],
+                        subcategories: data.data.subcategories || [],
+                        brands: data.data.brands || [],
+                        priceRange: data.data.price_range || { min: 0, max: 1000 }
+                    };
+                    
+                    // Update price range sliders
+                    updatePriceRangeSliders();
+                    
+                    // Render filter options
+                    renderFilterOptions();
+                } else {
+                    console.error('Error fetching filters:', data.message);
+                }
+            } catch (error) {
+                console.error('Error fetching filters:', error);
+            }
+        }
+        
+        // Update price range sliders with actual min/max values
+        function updatePriceRangeSliders() {
+            const priceRange = availableFilters.priceRange;
+            
+            // Desktop sliders
+            document.getElementById('priceRangeMin').min = priceRange.min;
+            document.getElementById('priceRangeMin').max = priceRange.max;
+            document.getElementById('priceRangeMin').value = priceRange.min;
+            
+            document.getElementById('priceRangeMax').min = priceRange.min;
+            document.getElementById('priceRangeMax').max = priceRange.max;
+            document.getElementById('priceRangeMax').value = priceRange.max;
+            
+            document.getElementById('minPriceValue').textContent = priceRange.min;
+            document.getElementById('maxPriceValue').textContent = priceRange.max;
+            
+            // Mobile sliders
+            document.getElementById('mobilePriceRangeMin').min = priceRange.min;
+            document.getElementById('mobilePriceRangeMin').max = priceRange.max;
+            document.getElementById('mobilePriceRangeMin').value = priceRange.min;
+            
+            document.getElementById('mobilePriceRangeMax').min = priceRange.min;
+            document.getElementById('mobilePriceRangeMax').max = priceRange.max;
+            document.getElementById('mobilePriceRangeMax').value = priceRange.max;
+            
+            document.getElementById('mobileMinPriceValue').textContent = priceRange.min;
+            document.getElementById('mobileMaxPriceValue').textContent = priceRange.max;
+            
+            // Update current filters
+            currentFilters.minPrice = priceRange.min;
+            currentFilters.maxPrice = priceRange.max;
+        }
+        
+        // Render filter options in sidebar
+        function renderFilterOptions() {
+            // Categories
+            const categoryFilters = document.getElementById('categoryFilters');
+            categoryFilters.innerHTML = '';
+            
+            availableFilters.categories.forEach(category => {
+                const option = document.createElement('div');
+                option.className = 'filter-option flex items-center p-2 rounded cursor-pointer';
+                option.innerHTML = `
+                    <input type="radio" name="category" id="cat-${category}" value="${category}" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                    <label for="cat-${category}" class="cursor-pointer">${category}</label>
+                `;
+                option.querySelector('input').addEventListener('change', () => {
+                    currentFilters.category = category;
+                    currentFilters.page = 1; // Reset to first page
+                    fetchProducts();
+                });
+                categoryFilters.appendChild(option);
+            });
+            
+            // Mobile categories
+            const mobileCategoryFilters = document.getElementById('mobileCategoryFilters');
+            mobileCategoryFilters.innerHTML = '';
+            
+            availableFilters.categories.forEach(category => {
+                const option = document.createElement('div');
+                option.className = 'filter-option flex items-center p-2 rounded cursor-pointer';
+                option.innerHTML = `
+                    <input type="radio" name="mobileCategory" id="mobile-cat-${category}" value="${category}" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                    <label for="mobile-cat-${category}" class="cursor-pointer">${category}</label>
+                `;
+                mobileCategoryFilters.appendChild(option);
+            });
+            
+            // Brands
+            const brandFilters = document.getElementById('brandFilters');
+            brandFilters.innerHTML = '';
+            
+            availableFilters.brands.forEach(brand => {
+                const option = document.createElement('div');
+                option.className = 'filter-option flex items-center p-2 rounded cursor-pointer';
+                option.innerHTML = `
+                    <input type="checkbox" id="brand-${brand}" value="${brand}" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                    <label for="brand-${brand}" class="cursor-pointer">${brand}</label>
+                `;
+                option.querySelector('input').addEventListener('change', () => {
+                    if (option.querySelector('input').checked) {
+                        currentFilters.brand = brand;
+                    } else {
+                        currentFilters.brand = null;
+                    }
+                    currentFilters.page = 1; // Reset to first page
+                    fetchProducts();
+                });
+                brandFilters.appendChild(option);
+            });
+            
+            // Mobile brands
+            const mobileBrandFilters = document.getElementById('mobileBrandFilters');
+            mobileBrandFilters.innerHTML = '';
+            
+            availableFilters.brands.forEach(brand => {
+                const option = document.createElement('div');
+                option.className = 'filter-option flex items-center p-2 rounded cursor-pointer';
+                option.innerHTML = `
+                    <input type="checkbox" id="mobile-brand-${brand}" value="${brand}" class="mr-3 rounded text-blue-600 focus:ring-blue-500">
+                    <label for="mobile-brand-${brand}" class="cursor-pointer">${brand}</label>
+                `;
+                mobileBrandFilters.appendChild(option);
+            });
+        }
+        
+        // Fetch products from API
+        async function fetchProducts() {
+            try {
+                loadingIndicator.classList.remove('hidden');
+                productsGrid.innerHTML = ''; // Clear existing products
+                
+                // Determine the API endpoint based on filters
+                let apiUrl;
+                const queryParams = [];
+                
+                if (currentFilters.category && !currentFilters.searchQuery) {
+                    apiUrl = `/api/products/category/${encodeURIComponent(currentFilters.category)}`;
+                } else if (currentFilters.searchQuery) {
+                    apiUrl = '/api/products/normal-search';
+                    queryParams.push(`query=${encodeURIComponent(currentFilters.searchQuery)}`);
+                } else {
+                    apiUrl = '/api/products/homepage';
+                }
+                
+                // Add other filters to query params
+                if (currentFilters.minPrice > availableFilters.priceRange.min) {
+                    queryParams.push(`min_price=${currentFilters.minPrice}`);
+                }
+                
+                if (currentFilters.maxPrice < availableFilters.priceRange.max) {
+                    queryParams.push(`max_price=${currentFilters.maxPrice}`);
+                }
+                
+                if (currentFilters.minRating) {
+                    queryParams.push(`min_rating=${currentFilters.minRating}`);
+                }
+                
+                if (currentFilters.brand) {
+                    queryParams.push(`brand=${encodeURIComponent(currentFilters.brand)}`);
+                }
+                
+                if (currentFilters.inStock) {
+                    queryParams.push(`in_stock=true`);
+                }
+                
+                // Add pagination
+                queryParams.push(`page=${currentFilters.page}`);
+                queryParams.push(`per_page=${currentFilters.perPage}`);
+                
+                if (queryParams.length > 0) {
+                    apiUrl += `?${queryParams.join('&')}`;
+                }
+                
+                const response = await fetch(apiUrl);
+                const data = await response.json();
+                
+                if (data.success) {
+                    renderProducts(data.data);
+                    updateActiveFilters();
+                    
+                    // Show pagination if needed
+                    if (data.meta && data.meta.total > currentFilters.perPage) {
+                        pagination.classList.remove('hidden');
+                        currentPage.textContent = currentFilters.page;
+                        
+                        // Disable prev/next buttons when appropriate
+                        prevPage.disabled = currentFilters.page === 1;
+                        nextPage.disabled = currentFilters.page >= Math.ceil(data.meta.total / currentFilters.perPage);
+                    } else {
+                        pagination.classList.add('hidden');
+                    }
+                } else {
+                    console.error('Error fetching products:', data.message);
+                    renderProducts([]);
+                }
+            } catch (error) {
+                console.error('Error fetching products:', error);
+                renderProducts([]);
+            } finally {
+                loadingIndicator.classList.add('hidden');
+            }
+        }
+        
+        // Render products to the grid
+        function renderProducts(products) {
+            productsGrid.innerHTML = '';
+            
+            if (products.length === 0) {
+                noProductsMessage.classList.remove('hidden');
+                return;
+            }
+            
+            noProductsMessage.classList.add('hidden');
+            
+            products.forEach(product => {
+                const productCard = createProductCard(product);
+                productsGrid.appendChild(productCard);
+            });
+        }
+        
+        // Create a product card element
+        function createProductCard(product) {
+            const card = document.createElement('div');
+            card.className = 'product-card bg-white rounded-lg overflow-hidden shadow-md border border-gray-100';
+            
+            // Use the first image if available
+            const productImage = product.images && product.images.length > 0 ? product.images[0] : 'https://via.placeholder.com/300';
+            
+            card.innerHTML = `
+                <div class="relative pb-[100%] overflow-hidden">
+                    <img src="${productImage}" alt="${product.name}" 
+                        class="absolute h-full w-full object-cover hover:scale-105 transition-transform duration-300">
+                    <button class="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md text-gray-700 hover:text-red-500">
+                        <i class="far fa-heart"></i>
+                    </button>
+                    ${product.stock_quantity <= 0 ? `
+                        <div class="absolute inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+                            <span class="bg-white px-2 py-1 rounded text-sm font-medium">Out of Stock</span>
+                        </div>
+                    ` : ''}
+                </div>
+                <div class="p-4">
+                    <div class="flex justify-between items-start mb-1">
+                        <h3 class="font-medium text-gray-800 truncate">${product.name}</h3>
+                        <span class="text-sm font-medium bg-blue-100 text-blue-800 px-2 py-1 rounded">${product.category}</span>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-2 line-clamp-2">${product.description}</p>
+                    <div class="flex items-center mb-2">
+                        <div class="flex text-yellow-400">
+                            ${renderRatingStars(product.ratings?.average || 0)}
+                        </div>
+                        <span class="text-xs text-gray-500 ml-1">(${product.ratings?.count || 0})</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-lg font-bold text-gray-900">$${product.price.toFixed(2)}</span>
+                        <div class="flex space-x-2">
+                            <button class="view-details px-3 py-1 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50 transition-colors">
+                                View
+                            </button>
+                            <button class="add-to-cart px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors" 
+                                ${product.stock_quantity <= 0 ? 'disabled' : ''}>
+                                <i class="fas fa-shopping-cart mr-1"></i> Add
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+        
+        // Render rating stars
+        function renderRatingStars(rating) {
+            let stars = '';
+            const fullStars = Math.floor(rating);
+            const hasHalfStar = rating % 1 >= 0.5;
+            
+            for (let i = 0; i < fullStars; i++) {
+                stars += '<i class="fas fa-star"></i>';
+            }
+            
+            if (hasHalfStar) {
+                stars += '<i class="fas fa-star-half-alt"></i>';
+            }
+            
+            const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
+            for (let i = 0; i < emptyStars; i++) {
+                stars += '<i class="far fa-star"></i>';
+            }
+            
+            return stars;
+        }
+        
+        // Update active filters display
+        function updateActiveFilters() {
+            activeFiltersContainer.innerHTML = '';
+            let hasFilters = false;
+            
+            if (currentFilters.category) {
+                hasFilters = true;
+                const chip = createFilterChip('Category: ' + currentFilters.category, 'category');
+                activeFiltersContainer.appendChild(chip);
+            }
+            
+            if (currentFilters.minPrice > availableFilters.priceRange.min || currentFilters.maxPrice < availableFilters.priceRange.max) {
+                hasFilters = true;
+                const chip = createFilterChip(
+                    `Price: $${currentFilters.minPrice} - $${currentFilters.maxPrice}`, 
+                    'price'
+                );
+                activeFiltersContainer.appendChild(chip);
+            }
+            
+            if (currentFilters.minRating) {
+                hasFilters = true;
+                const chip = createFilterChip(
+                    `Rating: ${currentFilters.minRating}+`, 
+                    'rating'
+                );
+                activeFiltersContainer.appendChild(chip);
+            }
+            
+            if (currentFilters.brand) {
+                hasFilters = true;
+                const chip = createFilterChip(
+                    `Brand: ${currentFilters.brand}`, 
+                    'brand'
+                );
+                activeFiltersContainer.appendChild(chip);
+            }
+            
+            if (currentFilters.inStock) {
+                hasFilters = true;
+                const chip = createFilterChip(
+                    `In Stock`, 
+                    'inStock'
+                );
+                activeFiltersContainer.appendChild(chip);
+            }
+            
+            if (currentFilters.searchQuery) {
+                hasFilters = true;
+                const chip = createFilterChip(
+                    `Search: "${currentFilters.searchQuery}"`, 
+                    'search'
+                );
+                activeFiltersContainer.appendChild(chip);
+            }
+            
+            clearAllFiltersBtn.style.display = hasFilters ? 'block' : 'none';
+        }
+        
+        // Create a filter chip
+        function createFilterChip(label, type) {
+            const chip = document.createElement('div');
+            chip.className = 'filter-chip flex items-center bg-gray-200 text-gray-800 px-3 py-1 rounded-full text-sm';
+            chip.innerHTML = `
+                <span>${label}</span>
+                <button class="ml-2 text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            `;
+            
+            chip.querySelector('button').addEventListener('click', () => {
+                removeFilter(type);
+            });
+            
+            return chip;
+        }
+    
+        // Remove a specific filter
+        function removeFilter(type) {
+            switch (type) {
+                case 'category':
+                    currentFilters.category = null;
+                    document.querySelectorAll('input[name="category"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+                    document.querySelectorAll('input[name="mobileCategory"]').forEach(radio => {
+                        radio.checked = false;
+                    });
+                    break;
+                case 'price':
+                    currentFilters.minPrice = availableFilters.priceRange.min;
+                    currentFilters.maxPrice = availableFilters.priceRange.max;
+                    document.getElementById('priceRangeMin').value = availableFilters.priceRange.min;
+                    document.getElementById('priceRangeMax').value = availableFilters.priceRange.max;
+                    document.getElementById('minPriceValue').textContent = availableFilters.priceRange.min;
+                    document.getElementById('maxPriceValue').textContent = availableFilters.priceRange.max;
+                    document.getElementById('mobilePriceRangeMin').value = availableFilters.priceRange.min;
+                    document.getElementById('mobilePriceRangeMax').value = availableFilters.priceRange.max;
+                    document.getElementById('mobileMinPriceValue').textContent = availableFilters.priceRange.min;
+                    document.getElementById('mobileMaxPriceValue').textContent = availableFilters.priceRange.max;
+                    break;
+                case 'rating':
+                    currentFilters.minRating = null;
+                    document.querySelectorAll('input[type="checkbox"][id^="rating"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    document.querySelectorAll('input[type="checkbox"][id^="mobileRating"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    break;
+                case 'brand':
+                    currentFilters.brand = null;
+                    document.querySelectorAll('input[id^="brand-"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    document.querySelectorAll('input[id^="mobile-brand-"]').forEach(checkbox => {
+                        checkbox.checked = false;
+                    });
+                    break;
+                case 'inStock':
+                    currentFilters.inStock = false;
+                    document.getElementById('inStock').checked = false;
+                    document.getElementById('mobileInStock').checked = false;
+                    break;
+                case 'search':
+                    currentFilters.searchQuery = null;
+                    searchInput.value = '';
+                    break;
+            }
+            
+            currentFilters.page = 1; // Reset to first page
+            updateActiveFilters();
+            fetchProducts();
+        }
+    
+        // Clear all filters
+        function resetAllFilters() {
+            currentFilters = {
+                category: null,
+                subcategory: null,
+                brand: null,
+                minPrice: availableFilters.priceRange.min,
+                maxPrice: availableFilters.priceRange.max,
+                minRating: null,
+                inStock: false,
+                searchQuery: null,
+                page: 1,
+                perPage: 12
+            };
+            
+            // Reset UI elements
+            document.querySelectorAll('input[name="category"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.querySelectorAll('input[name="mobileCategory"]').forEach(radio => {
+                radio.checked = false;
+            });
+            document.getElementById('priceRangeMin').value = availableFilters.priceRange.min;
+            document.getElementById('priceRangeMax').value = availableFilters.priceRange.max;
+            document.getElementById('minPriceValue').textContent = availableFilters.priceRange.min;
+            document.getElementById('maxPriceValue').textContent = availableFilters.priceRange.max;
+            document.getElementById('mobilePriceRangeMin').value = availableFilters.priceRange.min;
+            document.getElementById('mobilePriceRangeMax').value = availableFilters.priceRange.max;
+            document.getElementById('mobileMinPriceValue').textContent = availableFilters.priceRange.min;
+            document.getElementById('mobileMaxPriceValue').textContent = availableFilters.priceRange.max;
+            document.querySelectorAll('input[type="checkbox"][id^="rating"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.querySelectorAll('input[type="checkbox"][id^="mobileRating"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.querySelectorAll('input[id^="brand-"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.querySelectorAll('input[id^="mobile-brand-"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            document.getElementById('inStock').checked = false;
+            document.getElementById('mobileInStock').checked = false;
+            searchInput.value = '';
+            
+            updateActiveFilters();
+            fetchProducts();
+        }
+    
+        // Setup event listeners
+        function setupEventListeners() {
+            // Price range sliders
+            const priceRangeMin = document.getElementById('priceRangeMin');
+            const priceRangeMax = document.getElementById('priceRangeMax');
+            const minPriceValue = document.getElementById('minPriceValue');
+            const maxPriceValue = document.getElementById('maxPriceValue');
+            
+            priceRangeMin.addEventListener('input', () => {
+                minPriceValue.textContent = priceRangeMin.value;
+            });
+            
+            priceRangeMax.addEventListener('input', () => {
+                maxPriceValue.textContent = priceRangeMax.value;
+            });
+            
+            // Apply price filter
+            document.getElementById('applyPriceFilter').addEventListener('click', () => {
+                currentFilters.minPrice = parseInt(priceRangeMin.value);
+                currentFilters.maxPrice = parseInt(priceRangeMax.value);
+                currentFilters.page = 1; // Reset to first page
+                fetchProducts();
+            });
+            
+            // Mobile price range sliders
+            const mobilePriceRangeMin = document.getElementById('mobilePriceRangeMin');
+            const mobilePriceRangeMax = document.getElementById('mobilePriceRangeMax');
+            const mobileMinPriceValue = document.getElementById('mobileMinPriceValue');
+            const mobileMaxPriceValue = document.getElementById('mobileMaxPriceValue');
+            
+            mobilePriceRangeMin.addEventListener('input', () => {
+                mobileMinPriceValue.textContent = mobilePriceRangeMin.value;
+            });
+            
+            mobilePriceRangeMax.addEventListener('input', () => {
+                mobileMaxPriceValue.textContent = mobilePriceRangeMax.value;
+            });
+            
+            // Mobile apply price filter
+            document.getElementById('mobileApplyPriceFilter').addEventListener('click', () => {
+                currentFilters.minPrice = parseInt(mobilePriceRangeMin.value);
+                currentFilters.maxPrice = parseInt(mobilePriceRangeMax.value);
+                currentFilters.page = 1; // Reset to first page
+                fetchProducts();
+                mobileFiltersSidebar.classList.add('hidden');
+            });
+            
+            // Rating filters
+            document.querySelectorAll('input[type="checkbox"][id^="rating"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        currentFilters.minRating = parseInt(e.target.value);
+                        // Uncheck other rating checkboxes
+                        document.querySelectorAll('input[type="checkbox"][id^="rating"]').forEach(cb => {
+                            if (cb !== e.target) cb.checked = false;
+                        });
+                        currentFilters.page = 1; // Reset to first page
+                        fetchProducts();
+                    } else {
+                        currentFilters.minRating = null;
+                        currentFilters.page = 1; // Reset to first page
+                        fetchProducts();
+                    }
+                });
+            });
+            
+            // Mobile rating filters
+            document.querySelectorAll('input[type="checkbox"][id^="mobileRating"]').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    if (e.target.checked) {
+                        // Uncheck other rating checkboxes
+                        document.querySelectorAll('input[type="checkbox"][id^="mobileRating"]').forEach(cb => {
+                            if (cb !== e.target) cb.checked = false;
+                        });
+                    }
+                });
+            });
+            
+            // In stock filter
+            document.getElementById('inStock').addEventListener('change', (e) => {
+                currentFilters.inStock = e.target.checked;
+                currentFilters.page = 1; // Reset to first page
+                fetchProducts();
+            });
+            
+            // Mobile in stock filter
+            document.getElementById('mobileInStock').addEventListener('change', (e) => {
+                // This will be applied when mobile apply button is clicked
+            });
+            
+            // Brand filters are handled in renderFilterOptions()
+            
+            // Clear all filters
+            clearAllFiltersBtn.addEventListener('click', () => {
+                resetAllFilters();
+            });
+            
+            resetFiltersBtn.addEventListener('click', () => {
+                resetAllFilters();
+            });
+            
+            // Search functionality
+            searchBtn.addEventListener('click', () => {
+                performSearch();
+            });
+            
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    performSearch();
+                }
+            });
+            
+            // Mobile filters
+            mobileFiltersBtn.addEventListener('click', () => {
+                mobileFiltersSidebar.classList.remove('hidden');
+            });
+            
+            closeMobileFilters.addEventListener('click', () => {
+                mobileFiltersSidebar.classList.add('hidden');
+            });
+            
+            mobileApplyFilters.addEventListener('click', () => {
+                // Apply mobile filters
+                const selectedCategory = document.querySelector('input[name="mobileCategory"]:checked');
+                currentFilters.category = selectedCategory ? selectedCategory.value : null;
+                
+                const selectedBrand = document.querySelector('input[id^="mobile-brand-"]:checked');
+                currentFilters.brand = selectedBrand ? selectedBrand.value : null;
+                
+                currentFilters.inStock = document.getElementById('mobileInStock').checked;
+                
+                const selectedRating = document.querySelector('input[id^="mobileRating"]:checked');
+                currentFilters.minRating = selectedRating ? parseInt(selectedRating.value) : null;
+                
+                currentFilters.page = 1; // Reset to first page
+                fetchProducts();
+                mobileFiltersSidebar.classList.add('hidden');
+            });
+            
+            mobileClearFiltersBtn.addEventListener('click', () => {
+                // Clear mobile filters
+                document.querySelectorAll('input[name="mobileCategory"]').forEach(radio => {
+                    radio.checked = false;
+                });
+                document.querySelectorAll('input[id^="mobile-brand-"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                document.getElementById('mobileInStock').checked = false;
+                document.querySelectorAll('input[id^="mobileRating"]').forEach(checkbox => {
+                    checkbox.checked = false;
+                });
+                document.getElementById('mobilePriceRangeMin').value = availableFilters.priceRange.min;
+                document.getElementById('mobilePriceRangeMax').value = availableFilters.priceRange.max;
+                document.getElementById('mobileMinPriceValue').textContent = availableFilters.priceRange.min;
+                document.getElementById('mobileMaxPriceValue').textContent = availableFilters.priceRange.max;
+            });
+            
+            // Pagination
+            prevPage.addEventListener('click', () => {
+                if (currentFilters.page > 1) {
+                    currentFilters.page--;
+                    fetchProducts();
+                }
+            });
+            
+            nextPage.addEventListener('click', () => {
+                currentFilters.page++;
+                fetchProducts();
+            });
+        }
+    
+        // Perform search
+        function performSearch() {
+            const query = searchInput.value.trim();
+            currentFilters.searchQuery = query || null;
+            currentFilters.page = 1; // Reset to first page
+            updateActiveFilters();
+            fetchProducts();
+        }
+    </script>
+</body>
+</html>

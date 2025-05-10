@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ProductController;
+use App\Http\Middleware\JwtMiddleware;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -22,4 +24,33 @@ Route::middleware('jwt.auth')->group(function () {
         Route::post('/users/{id}/block', [AdminController::class, 'blockUser']);
         Route::post('/users/{id}/unblock', [AdminController::class, 'unblockUser']);
     });
+});
+
+
+///Product endpoint ///
+Route::get('/products/category/{category}', [ProductController::class, 'getByCategory']);
+Route::get('/products/homepage', [ProductController::class, 'homepageProducts']);
+Route::get('/products/filters', [ProductController::class, 'getAvailableFilters']);
+Route::get('/products/normal-search', [ProductController::class, 'normalSearch']);
+
+// Protected endpoints
+Route::middleware([JwtMiddleware::class . ':retailer,admin'])->group(function () {
+    Route::post('/products', [ProductController::class, 'store']);
+    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    Route::get('/retailer/products', [ProductController::class, 'getRetailerProducts']);
+    Route::get('/retailer/products/{retailerId}', [ProductController::class, 'getRetailerProducts']);
+});
+
+Route::middleware([JwtMiddleware::class . ':admin'])->group(function () {
+    Route::get('/admin/products', [ProductController::class, 'getAllProducts']);
+});
+
+Route::middleware([JwtMiddleware::class . ':user,retailer,admin'])->group(function () {
+    Route::get('/products/search', [ProductController::class, 'search']);
+    Route::get('/products/{id}', [ProductController::class, 'show']);
+});
+
+Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
+    Route::post('/products/{id}/rate', [ProductController::class, 'updateRating']);
 });

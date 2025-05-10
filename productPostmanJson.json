@@ -1,0 +1,336 @@
+{
+    "info": {
+      "_postman_id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+      "name": "ShopEasy API",
+      "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+      {
+        "name": "Public Endpoints",
+        "item": [
+          {
+            "name": "Get Products by Category",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/api/products/category/electronics",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "category", "electronics"]
+              },
+              "description": "Get products by category"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Homepage Products",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/api/products/homepage?category=electronics&min_price=100&max_price=1000&min_rating=4&brand=samsung&sort_by=price_asc",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "homepage"],
+                "query": [
+                  {
+                    "key": "category",
+                    "value": "electronics"
+                  },
+                  {
+                    "key": "min_price",
+                    "value": "100"
+                  },
+                  {
+                    "key": "max_price",
+                    "value": "1000"
+                  },
+                  {
+                    "key": "min_rating",
+                    "value": "4"
+                  },
+                  {
+                    "key": "brand",
+                    "value": "samsung"
+                  },
+                  {
+                    "key": "sort_by",
+                    "value": "price_asc"
+                  }
+                ]
+              },
+              "description": "Get filtered homepage products"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Available Filters",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/api/products/filters",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "filters"]
+              },
+              "description": "Get available filters for products"
+            },
+            "response": []
+          },
+          {
+            "name": "Search Products",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/api/products/search?query=smartphone",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "search"],
+                "query": [
+                  {
+                    "key": "query",
+                    "value": "smartphone"
+                  }
+                ]
+              },
+              "description": "Search products by query"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Product by ID",
+            "request": {
+              "method": "GET",
+              "header": [],
+              "url": {
+                "raw": "{{base_url}}/api/products/PROD123456",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "PROD123456"]
+              },
+              "description": "Get product details by ID"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Retailer & Admin Protected Endpoints",
+        "item": [
+          {
+            "name": "Create Product (Retailer/Admin)",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{retailer_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"Premium Smartphone\",\n  \"description\": \"Latest model with advanced features\",\n  \"price\": 999.99,\n  \"category\": \"electronics\",\n  \"subcategory\": \"smartphones\",\n  \"brand\": \"PremiumBrand\",\n  \"stock_quantity\": 50,\n  \"images\": [\n    \"https://example.com/image1.jpg\",\n    \"https://example.com/image2.jpg\"\n  ],\n  \"variants\": [\n    {\n      \"variant_id\": \"VAR001\",\n      \"color\": \"Black\",\n      \"stock\": 25\n    },\n    {\n      \"variant_id\": \"VAR002\",\n      \"color\": \"Silver\",\n      \"stock\": 25\n    }\n  ],\n  \"specifications\": {\n    \"battery_life\": \"24 hours\",\n    \"connectivity\": \"5G, WiFi 6\",\n    \"weight\": \"198g\"\n  },\n  \"is_featured\": true\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/products",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products"]
+              },
+              "description": "Create a new product (retailer or admin)"
+            },
+            "response": []
+          },
+          {
+            "name": "Update Product (Retailer/Admin)",
+            "request": {
+              "method": "PUT",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{retailer_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"name\": \"Premium Smartphone Pro\",\n  \"price\": 1099.99,\n  \"stock_quantity\": 30,\n  \"is_featured\": false\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/products/PROD123456",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "PROD123456"]
+              },
+              "description": "Update a product (retailer or admin)"
+            },
+            "response": []
+          },
+          {
+            "name": "Delete Product (Retailer/Admin)",
+            "request": {
+              "method": "DELETE",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{retailer_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/products/PROD123456",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "PROD123456"]
+              },
+              "description": "Delete a product (retailer or admin)"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Retailer Products",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{retailer_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/retailer/products",
+                "host": ["{{base_url}}"],
+                "path": ["api", "retailer", "products"]
+              },
+              "description": "Get products for the authenticated retailer"
+            },
+            "response": []
+          },
+          {
+            "name": "Get Retailer Products by ID (Admin)",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{admin_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/retailer/products/1",
+                "host": ["{{base_url}}"],
+                "path": ["api", "retailer", "products", "1"]
+              },
+              "description": "Get products for a specific retailer (admin only)"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "Admin Only Endpoints",
+        "item": [
+          {
+            "name": "Get All Products (Admin)",
+            "request": {
+              "method": "GET",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{admin_token}}",
+                  "type": "text"
+                }
+              ],
+              "url": {
+                "raw": "{{base_url}}/api/admin/products",
+                "host": ["{{base_url}}"],
+                "path": ["api", "admin", "products"]
+              },
+              "description": "Get all products including inactive (admin only)"
+            },
+            "response": []
+          }
+        ]
+      },
+      {
+        "name": "User Protected Endpoints",
+        "item": [
+          {
+            "name": "Rate Product (User)",
+            "request": {
+              "method": "POST",
+              "header": [
+                {
+                  "key": "Authorization",
+                  "value": "Bearer {{user_token}}",
+                  "type": "text"
+                },
+                {
+                  "key": "Content-Type",
+                  "value": "application/json",
+                  "type": "text"
+                }
+              ],
+              "body": {
+                "mode": "raw",
+                "raw": "{\n  \"rating\": 5\n}"
+              },
+              "url": {
+                "raw": "{{base_url}}/api/products/PROD123456/rate",
+                "host": ["{{base_url}}"],
+                "path": ["api", "products", "PROD123456", "rate"]
+              },
+              "description": "Rate a product (user only)"
+            },
+            "response": []
+          }
+        ]
+      }
+    ],
+    "variable": [
+      {
+        "key": "base_url",
+        "value": "http://localhost:8000"
+      },
+      {
+        "key": "admin_token",
+        "value": "your_admin_jwt_token_here"
+      },
+      {
+        "key": "retailer_token",
+        "value": "your_retailer_jwt_token_here"
+      },
+      {
+        "key": "user_token",
+        "value": "your_user_jwt_token_here"
+      }
+    ],
+    "event": [
+      {
+        "listen": "prerequest",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      },
+      {
+        "listen": "test",
+        "script": {
+          "type": "text/javascript",
+          "exec": [
+            ""
+          ]
+        }
+      }
+    ]
+  }
