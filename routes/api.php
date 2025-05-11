@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ProductController;
 use App\Http\Middleware\JwtMiddleware;
+use App\Http\Controllers\Api\CartController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -42,6 +43,8 @@ Route::middleware([JwtMiddleware::class . ':retailer,admin'])->group(function ()
     Route::get('/retailer/products/{retailerId}', [ProductController::class, 'getRetailerProducts']);
 });
 
+Route::get('/product/id/{productId}', [ProductController::class, 'getProductById']);
+
 Route::middleware([JwtMiddleware::class . ':admin'])->group(function () {
     Route::get('/admin/products', [ProductController::class, 'getAllProducts']);
 });
@@ -53,4 +56,13 @@ Route::middleware([JwtMiddleware::class . ':user,retailer,admin'])->group(functi
 
 Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
     Route::post('/products/{id}/rate', [ProductController::class, 'updateRating']);
+});
+
+
+
+Route::middleware([JwtMiddleware::class . ':user,retailer'])->group(function () {
+     Route::post('/cart/add', [CartController::class, 'addToCart']);
+     Route::post('/cart/count', [CartController::class, 'cartCount']);
+    Route::get('/cart', [CartController::class, 'getCart']);
+    Route::delete('/cart/remove', [CartController::class, 'deleteCart']);
 });

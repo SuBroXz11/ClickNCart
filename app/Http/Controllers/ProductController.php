@@ -100,6 +100,25 @@ class ProductController extends Controller
         ]);
     }
 
+    public function getProductById($productId)
+    {
+        $product = Product::where('product_id', $productId)
+                         ->where('is_active', true)
+                         ->first();
+
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found or not available'
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $product
+        ]);
+    }
+
     /**
      * Update a product (for retailer and admin)
      */
