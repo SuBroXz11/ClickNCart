@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use App\Models\User;
+use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
@@ -33,6 +34,7 @@ class ProductController extends Controller
             'specifications.connectivity' => 'sometimes|string',
             'specifications.weight' => 'sometimes|string',
             'is_featured' => 'sometimes|boolean',
+            'shop_id' => 'required|exists:shops,shop_id',
         ]);
 
         if ($validator->fails()) {
@@ -45,7 +47,6 @@ class ProductController extends Controller
 
         $productData = $validator->validated();
         $productData['product_id'] = 'PROD' . Str::random(6);
-        $productData['retailer_id'] = $request->user()->id;
         $productData['ratings'] = [
             'average' => 0,
             'count' => 0
@@ -133,13 +134,7 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // Check if the user is the retailer who owns the product or an admin
-        if ($request->user()->role !== User::ROLE_ADMIN && $product->retailer_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to update this product'
-            ], 403);
-        }
+        
 
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
@@ -193,13 +188,7 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // Check if the user is the retailer who owns the product or an admin
-        if ($request->user()->role !== User::ROLE_ADMIN && $product->retailer_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to delete this product'
-            ], 403);
-        }
+        
 
         $product->delete();
 
@@ -588,4 +577,45 @@ class ProductController extends Controller
             ]
         ]);
     }
+
+    // Add a new method to get products by shop
+public function getByShop(Request $request, $shopId)
+{
+    $shop = Shop::where('shop_id', $shopId)->first();
+
+    if (!$shop) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Shop not found'
+        ], 404);
+    }
+
+    // Check authorization:
+    // - Admin can view any shop's products
+    // - Retailer can view only their own shop's products
+    // - Users can view any active shop's products
+    if ($request->user()->role === User::ROLE_RETAILER && $shop->user_id !== $request->user()->id) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Unauthorized to view this shop\'s products'
+        ], 403);
+    }
+
+    $perPage = $request->input('per_page', 10);
+    $products = Product::where('shop_id', $shopId)
+                      ->where('is_active', $request->user()->role !== User::ROLE_USER ? true : null)
+                      ->paginate($perPage);
+
+    return response()->json([
+        'success' => true,
+        'data' => $products->items(),
+        'meta' => [
+            'current_page' => $products->currentPage(),
+            'per_page' => $products->perPage(),
+            'total' => $products->total(),
+            'has_next_page' => $products->hasMorePages(),
+            'has_previous_page' => $products->currentPage() > 1,
+        ]
+    ]);
+}
 }

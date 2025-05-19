@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Shops - ClickNCart</title>
+    <link rel="preload" href="./font/mosvita.otf" as="font" type="font/otf" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5649c0;
+            --secondary: #00cec9;
+            --dark: #2d3436;
+            --light: #f5f6fa;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .logo i {
+            margin-right: 10px;
+            color: var(--secondary);
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--dark);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            bottom: -5px;
+            left: 0;
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .auth-buttons .btn {
+            margin-left: 1rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-outline {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--primary);
+            padding: 4px 8px;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 8rem 5% 3rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* Page Header */
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .page-header h1 {
+            font-size: 2.2rem;
+            color: var(--dark);
+        }
+
+        .btn-add-shop {
+            padding: 0.8rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-add-shop:hover {
+            background: var(--primary-dark);
+        }
+
+        /* Shops Grid */
+        .shops-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        /* Shop Card */
+        .shop-card {
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .shop-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .shop-banner {
+            height: 150px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .shop-logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid white;
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            bottom: -40px;
+            left: 20px;
+            background-color: white;
+        }
+
+        .shop-details {
+            padding: 3rem 1.5rem 1.5rem;
+        }
+
+        .shop-name {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--dark);
+        }
+
+        .shop-description {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .shop-stats {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        .shop-actions {
+            display: flex;
+            border-top: 1px solid #eee;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+        }
+
+        .shop-action-btn {
+            flex: 1;
+            text-align: center;
+            padding: 0.5rem;
+            color: var(--primary);
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 0.3s;
+        }
+
+        .shop-action-btn:hover {
+            color: var(--primary-dark);
+        }
+
+        .shop-action-btn.delete-btn {
+            color: var(--danger);
+        }
+
+        .shop-action-btn.delete-btn:hover {
+            color: #b02a37;
+        }
+
+        .shop-action-btn i {
+            margin-right: 5px;
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 5rem 0;
+        }
+
+        .empty-state i {
+            font-size: 5rem;
+            color: #ddd;
+            margin-bottom: 2rem;
+        }
+
+        .empty-state h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        .empty-state p {
+            color: #666;
+            margin-bottom: 2rem;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: modalFadeIn 0.3s;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            font-size: 1.5rem;
+            color: var(--dark);
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #777;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .modal-footer {
+            padding: 1.5rem;
+            border-top: 1px solid #eee;
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+        }
+
+        /* Form Styles */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Delete Confirmation Modal */
+        .delete-confirm-modal .modal-content {
+            max-width: 400px;
+        }
+
+        .delete-confirm-modal .modal-body {
+            text-align: center;
+            padding: 2rem 1.5rem;
+        }
+
+        .delete-confirm-modal .modal-body i {
+            font-size: 3rem;
+            color: var(--danger);
+            margin-bottom: 1.5rem;
+        }
+
+        .delete-confirm-modal .modal-body h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+        }
+
+        .delete-confirm-modal .modal-body p {
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .delete-confirm-modal .modal-footer {
+            justify-content: center;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: 2px solid var(--danger);
+            padding: 4px 8px
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+            border-color: #bd2130;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .navbar {
+                flex-direction: column;
+                padding: 1rem;
+            }
+
+            .nav-links {
+                margin-top: 1rem;
+            }
+
+            .nav-links li {
+                margin-left: 1rem;
+                margin-right: 1rem;
+            }
+
+            .auth-buttons {
+                margin-top: 1rem;
+            }
+
+            .main-content {
+                padding-top: 7rem;
+            }
+
+            .page-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+
+            .shops-grid {
+                grid-template-columns: 1fr;
+            }
+
+          
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <i class="fas fa-shopping-cart"></i>
+                <span>ClickNCart</span>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/products">Products</a></li>
+                <li><a href="/shops" class="active">My Shops</a></li>
+                <li><a href="/orders">Orders</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="page-header">
+            <h1>My Shops</h1>
+            <button class="btn-add-shop" id="addShopBtn">
+                <i class="fas fa-plus"></i> Add New Shop
+            </button>
+        </div>
+
+        <!-- Shops Grid -->
+        <div class="shops-grid" id="shopsContainer">
+            <!-- Shops will be loaded here dynamically -->
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="emptyState" style="display: none;">
+            <i class="fas fa-store"></i>
+            <h2>No Shops Found</h2>
+            <p>You haven't created any shops yet. Start by adding your first shop to sell products.</p>
+            <button class="btn btn-primary" id="emptyStateAddBtn">
+               Add Your First Shop
+            </button>
+        </div>
+    </main>
+
+    <!-- Add Shop Modal -->
+    <div class="modal" id="addShopModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add New Shop</h2>
+                <button class="modal-close" id="closeAddShopModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="addShopForm">
+                    <div class="form-group">
+                        <label for="shopName">Shop Name</label>
+                        <input type="text" id="shopName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopDescription">Description</label>
+                        <textarea id="shopDescription" class="form-control form-textarea" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopLogo">Logo URL</label>
+                        <input type="url" id="shopLogo" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="shopBanner">Banner URL</label>
+                        <input type="url" id="shopBanner" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="shopAddress">Address</label>
+                        <input type="text" id="shopAddress" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopContact">Contact Number</label>
+                        <input type="text" id="shopContact" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopEmail">Email</label>
+                        <input type="email" id="shopEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="shopWebsite">Website</label>
+                        <input type="url" id="shopWebsite" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelAddShop">Cancel</button>
+                <button class="btn btn-primary" id="saveShopBtn">Save Shop</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Shop Modal -->
+    <div class="modal" id="editShopModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Edit Shop</h2>
+                <button class="modal-close" id="closeEditShopModal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="editShopForm">
+                    <input type="hidden" id="editShopId">
+                    <div class="form-group">
+                        <label for="editShopName">Shop Name</label>
+                        <input type="text" id="editShopName" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopDescription">Description</label>
+                        <textarea id="editShopDescription" class="form-control form-textarea" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopLogo">Logo URL</label>
+                        <input type="url" id="editShopLogo" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopBanner">Banner URL</label>
+                        <input type="url" id="editShopBanner" class="form-control">
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopAddress">Address</label>
+                        <input type="text" id="editShopAddress" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopContact">Contact Number</label>
+                        <input type="text" id="editShopContact" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopEmail">Email</label>
+                        <input type="email" id="editShopEmail" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="editShopWebsite">Website</label>
+                        <input type="url" id="editShopWebsite" class="form-control">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelEditShop">Cancel</button>
+                <button class="btn btn-primary" id="updateShopBtn">Update Shop</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div class="modal delete-confirm-modal" id="deleteConfirmModal">
+        <div class="modal-content">
+            <div class="modal-body">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Delete Shop</h3>
+                <p>Are you sure you want to delete this shop? This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" id="cancelDeleteShop">Cancel</button>
+                <button class="btn btn-danger" id="confirmDeleteShop">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Base URL for API
+        const base_url = 'http://localhost:8000';
+        
+        // DOM Elements
+        const shopsContainer = document.getElementById('shopsContainer');
+        const emptyState = document.getElementById('emptyState');
+        const addShopBtn = document.getElementById('addShopBtn');
+        const emptyStateAddBtn = document.getElementById('emptyStateAddBtn');
+        const addShopModal = document.getElementById('addShopModal');
+        const closeAddShopModal = document.getElementById('closeAddShopModal');
+        const cancelAddShop = document.getElementById('cancelAddShop');
+        const saveShopBtn = document.getElementById('saveShopBtn');
+        const addShopForm = document.getElementById('addShopForm');
+        
+        // Edit modal elements
+        const editShopModal = document.getElementById('editShopModal');
+        const closeEditShopModal = document.getElementById('closeEditShopModal');
+        const cancelEditShop = document.getElementById('cancelEditShop');
+        const updateShopBtn = document.getElementById('updateShopBtn');
+        const editShopForm = document.getElementById('editShopForm');
+        
+        // Delete modal elements
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        const cancelDeleteShop = document.getElementById('cancelDeleteShop');
+        const confirmDeleteShop = document.getElementById('confirmDeleteShop');
+        
+        // Current shop to be edited/deleted
+        let currentShopId = null;
+
+        // Check authentication and load shops on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const authToken = localStorage.getItem('auth_token');
+            
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            loadShops(authToken);
+        });
+
+        // Load shops from API
+        async function loadShops(token) {
+            try {
+                const response = await fetch(`${base_url}/api/shops/user`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    if (data.data.length === 0) {
+                        showEmptyState();
+                    } else {
+                        displayShops(data.data);
+                    }
+                } else {
+                    console.error('Error loading shops:', data.message);
+                    showEmptyState();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showEmptyState();
+            }
+        }
+
+        // Display shops in the grid
+        function displayShops(shops) {
+            shopsContainer.innerHTML = '';
+            emptyState.style.display = 'none';
+            
+            shops.forEach(shop => {
+                const shopCard = createShopCard(shop);
+                shopsContainer.appendChild(shopCard);
+            });
+        }
+
+        // Create shop card HTML element
+        function createShopCard(shop) {
+            const shopCard = document.createElement('div');
+            shopCard.className = 'shop-card animate__animated animate__fadeIn';
+            
+            // Shop banner with logo
+            const shopBanner = document.createElement('div');
+            shopBanner.className = 'shop-banner';
+            shopBanner.style.backgroundImage = `url(${shop.banner || 'https://via.placeholder.com/600x200?text=Shop+Banner'})`;
+            
+            const shopLogo = document.createElement('div');
+            shopLogo.className = 'shop-logo';
+            shopLogo.style.backgroundImage = `url(${shop.logo || 'https://via.placeholder.com/80?text=Logo'})`;
+            
+            shopBanner.appendChild(shopLogo);
+            
+            // Shop details
+            const shopDetails = document.createElement('div');
+            shopDetails.className = 'shop-details';
+            
+            const shopName = document.createElement('h3');
+            shopName.className = 'shop-name';
+            shopName.textContent = shop.name;
+            
+            const shopDesc = document.createElement('p');
+            shopDesc.className = 'shop-description';
+            shopDesc.textContent = shop.description;
+            
+            // Shop stats
+            const shopStats = document.createElement('div');
+            shopStats.className = 'shop-stats';
+            
+            const shopStatus = document.createElement('span');
+            shopStatus.innerHTML = ` ${shop.is_active ? 'Active' : 'Inactive'}`;
+            
+            const productsCount = document.createElement('span'); // You can update this with actual product count
+            
+            shopStats.appendChild(shopStatus);
+            shopStats.appendChild(productsCount);
+            
+            // Shop actions
+            const shopActions = document.createElement('div');
+            shopActions.className = 'shop-actions';
+            
+            const viewBtn = document.createElement('div');
+            viewBtn.className = 'shop-action-btn';
+            viewBtn.innerHTML = '<i class="fas fa-eye"></i> View';
+            viewBtn.addEventListener('click', () => {
+                window.location.href = `/manage-shop?shop_id=${shop.shop_id}`;
+            });
+            
+            const editBtn = document.createElement('div');
+            editBtn.className = 'shop-action-btn';
+            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
+            editBtn.addEventListener('click', () => {
+                openEditShopModal(shop);
+            });
+            
+            const deleteBtn = document.createElement('div');
+            deleteBtn.className = 'shop-action-btn delete-btn';
+            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
+            deleteBtn.addEventListener('click', () => {
+                openDeleteConfirmModal(shop.shop_id);
+            });
+            
+            shopActions.appendChild(viewBtn);
+            shopActions.appendChild(editBtn);
+            shopActions.appendChild(deleteBtn);
+            
+            // Assemble the shop card
+            shopDetails.appendChild(shopName);
+            shopDetails.appendChild(shopDesc);
+            shopDetails.appendChild(shopStats);
+            shopDetails.appendChild(shopActions);
+            
+            shopCard.appendChild(shopBanner);
+            shopCard.appendChild(shopDetails);
+            
+            return shopCard;
+        }
+
+        // Show empty state
+        function showEmptyState() {
+            shopsContainer.innerHTML = '';
+            emptyState.style.display = 'block';
+        }
+
+        // Open edit shop modal with shop data
+        function openEditShopModal(shop) {
+            currentShopId = shop.shop_id;
+            
+            document.getElementById('editShopId').value = shop.shop_id;
+            document.getElementById('editShopName').value = shop.name;
+            document.getElementById('editShopDescription').value = shop.description;
+            document.getElementById('editShopLogo').value = shop.logo || '';
+            document.getElementById('editShopBanner').value = shop.banner || '';
+            document.getElementById('editShopAddress').value = shop.address;
+            document.getElementById('editShopContact').value = shop.contact_number;
+            document.getElementById('editShopEmail').value = shop.email;
+            document.getElementById('editShopWebsite').value = shop.website || '';
+            
+            editShopModal.style.display = 'flex';
+        }
+
+        // Open delete confirmation modal
+        function openDeleteConfirmModal(shopId) {
+            currentShopId = shopId;
+            deleteConfirmModal.style.display = 'flex';
+        }
+
+        // Modal handling
+        addShopBtn.addEventListener('click', () => {
+            addShopModal.style.display = 'flex';
+        });
+
+        emptyStateAddBtn.addEventListener('click', () => {
+            addShopModal.style.display = 'flex';
+        });
+
+        closeAddShopModal.addEventListener('click', () => {
+            addShopModal.style.display = 'none';
+        });
+
+        cancelAddShop.addEventListener('click', () => {
+            addShopModal.style.display = 'none';
+        });
+
+        closeEditShopModal.addEventListener('click', () => {
+            editShopModal.style.display = 'none';
+        });
+
+        cancelEditShop.addEventListener('click', () => {
+            editShopModal.style.display = 'none';
+        });
+
+        cancelDeleteShop.addEventListener('click', () => {
+            deleteConfirmModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        window.addEventListener('click', (e) => {
+            if (e.target === addShopModal) {
+                addShopModal.style.display = 'none';
+            }
+            if (e.target === editShopModal) {
+                editShopModal.style.display = 'none';
+            }
+            if (e.target === deleteConfirmModal) {
+                deleteConfirmModal.style.display = 'none';
+            }
+        });
+
+        // Save new shop
+        saveShopBtn.addEventListener('click', async () => {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const shopData = {
+                name: document.getElementById('shopName').value,
+                description: document.getElementById('shopDescription').value,
+                logo: document.getElementById('shopLogo').value,
+                banner: document.getElementById('shopBanner').value,
+                address: document.getElementById('shopAddress').value,
+                contact_number: document.getElementById('shopContact').value,
+                email: document.getElementById('shopEmail').value,
+                website: document.getElementById('shopWebsite').value
+            };
+
+            try {
+                const response = await fetch(`${base_url}/api/shops`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(shopData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    addShopModal.style.display = 'none';
+                    addShopForm.reset();
+                    loadShops(authToken);
+                } else {
+                    alert('Failed to create shop: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while creating the shop');
+            }
+        });
+
+        // Update shop
+        updateShopBtn.addEventListener('click', async () => {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+
+            const shopData = {
+                name: document.getElementById('editShopName').value,
+                description: document.getElementById('editShopDescription').value,
+                logo: document.getElementById('editShopLogo').value,
+                banner: document.getElementById('editShopBanner').value,
+                address: document.getElementById('editShopAddress').value,
+                contact_number: document.getElementById('editShopContact').value,
+                email: document.getElementById('editShopEmail').value,
+                website: document.getElementById('editShopWebsite').value
+            };
+
+            try {
+                const response = await fetch(`${base_url}/api/shops/${currentShopId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(shopData)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    editShopModal.style.display = 'none';
+                    editShopForm.reset();
+                    loadShops(authToken);
+                } else {
+                    alert('Failed to update shop: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while updating the shop');
+            }
+        });
+
+        // Delete shop
+        confirmDeleteShop.addEventListener('click', async () => {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${base_url}/api/shops/${currentShopId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    deleteConfirmModal.style.display = 'none';
+                    loadShops(authToken);
+                } else {
+                    alert('Failed to delete shop: ' + data.message);
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the shop');
+            }
+        });
+    </script>
+</body>
+</html>

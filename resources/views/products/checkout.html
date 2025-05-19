@@ -529,7 +529,7 @@
         </div>
     </main>
 
-    <script>
+   <script>
         // Base URL for API
         const base_url = 'http://localhost:8000';
         
@@ -544,27 +544,19 @@
         const taxEl = document.getElementById('tax');
         const orderTotalEl = document.getElementById('orderTotal');
         const checkoutBtn = document.getElementById('checkoutBtn');
-        const loginBtn = document.getElementById('loginBtn');
-        const signupBtn = document.getElementById('signupBtn');
 
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', () => {
             const authToken = localStorage.getItem('auth_token');
             
             if (!authToken) {
-                // User not logged in
                 authMessage.style.display = 'block';
                 cartContainer.style.display = 'none';
             } else {
-                // User logged in - fetch cart items
                 authMessage.style.display = 'none';
                 cartContainer.style.display = 'block';
                 fetchCartItems(authToken);
             }
-            
-            // Set login/signup button hrefs
-            loginBtn.href = '/login';
-            signupBtn.href = '/register';
         });
 
         // Fetch cart items from API
@@ -602,11 +594,9 @@
             emptyCart.style.display = 'none';
             cartItemsContainer.innerHTML = '';
             
-            // Update cart summary
             totalItemsEl.textContent = data.total_items;
             totalPriceEl.textContent = `NPR ${data.total_price.toFixed(2)}`;
             
-            // Add each cart item to the container
             data.cart_items.forEach(item => {
                 const cartItemEl = createCartItemElement(item);
                 cartItemsContainer.appendChild(cartItemEl);
@@ -639,7 +629,6 @@
             brand.className = 'cart-item-brand';
             brand.textContent = `Brand: ${item.product.brand}`;
             
-            // Variant info if available
             const variantInfo = document.createElement('p');
             variantInfo.className = 'cart-item-variant';
             if (item.product.variants && item.product.variants.length > 0) {
@@ -712,8 +701,8 @@
             if (!authToken) return;
             
             try {
-                const response = await fetch(`${base_url}/api/cart/update`, {
-                    method: 'POST',
+                const response = await fetch(`${base_url}/api/cart/update-quantity`, {
+                    method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
                         'Content-Type': 'application/json'
@@ -731,9 +720,11 @@
                     fetchCartItems(authToken);
                 } else {
                     console.error('Error updating quantity:', data.message);
+                    alert('Failed to update quantity: ' + data.message);
                 }
             } catch (error) {
                 console.error('Error:', error);
+                alert('An error occurred while updating quantity');
             }
         }
 
@@ -763,7 +754,6 @@
                         itemToRemove.classList.add('animate__fadeOut');
                         setTimeout(() => {
                             itemToRemove.remove();
-                            // Check if cart is now empty
                             if (document.querySelectorAll('.cart-item').length === 0) {
                                 showEmptyCart();
                             }
@@ -774,9 +764,11 @@
                     fetchCartItems(authToken);
                 } else {
                     console.error('Error removing item:', data.message);
+                    alert('Failed to remove item: ' + data.message);
                 }
             } catch (error) {
                 console.error('Error:', error);
+                alert('An error occurred while removing item');
             }
         }
 
@@ -802,9 +794,66 @@
         }
 
         // Checkout button handler
-        checkoutBtn.addEventListener('click', () => {
-            // This function will be implemented later
-            alert('Checkout functionality will be implemented in the next phase!');
+        checkoutBtn.addEventListener('click', async () => {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Show confirmation dialog
+            const confirmed = confirm('Are you sure you want to proceed to checkout?');
+            if (!confirmed) return;
+
+            try {
+                // Calculate totals
+                const response = await fetch(`${base_url}/api/cart`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const cartData = await response.json();
+                
+                if (!cartData.success || cartData.cart_items.length === 0) {
+                    alert('Your cart is empty');
+                    return;
+                }
+
+                const subtotal = cartData.total_price;
+                const tax = subtotal * 0.1; // 10% tax
+                const shipping = 0; // Free shipping for now
+                const total = subtotal + tax + shipping;
+
+                // Create payment
+                const paymentResponse = await fetch(`${base_url}/api/payment/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        total: total,
+                        tax: tax,
+                        shipping: shipping
+                    })
+                });
+
+                const paymentData = await paymentResponse.json();
+
+                if (paymentData.success) {
+                    // Redirect to PayPal for payment
+                    window.location.href = paymentData.data.approve_url;
+                } else {
+                    console.error('Payment error:', paymentData.message);
+                    alert('Failed to initiate payment: ' + paymentData.message);
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('An error occurred during checkout');
+            }
         });
     </script>
 </body>

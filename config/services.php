@@ -17,6 +17,11 @@ return [
     'postmark' => [
         'token' => env('POSTMARK_TOKEN'),
     ],
+    'paypal' => [
+    'sandbox' => env('PAYPAL_SANDBOX', true),
+    'client_id' => env('PAYPAL_CLIENT_ID'),
+    'secret' => env('PAYPAL_SECRET'),
+],
 
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),

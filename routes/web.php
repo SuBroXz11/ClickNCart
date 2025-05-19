@@ -18,6 +18,16 @@ Route::get('/verify-email', [VerificationController::class, 'showVerificationFor
 Route::get('/dashboard', function () {
     return response()->file(resource_path('views/dashboard/dashboard.html'));
 });
+Route::get('/shops', function () {
+    return response()->file(resource_path('views/user/shops.html'));
+});
+
+Route::get('/manage-shop', function () {
+    return response()->file(resource_path('views/dashboard/manage-shop.html'));
+});
+Route::get('/approve-traders', function () {
+    return response()->file(resource_path('views/auth/approve-admin.html'));
+});
 
 Route::get('/profile', function () {
     return response()->file(resource_path('views/dashboard/profile.html'));

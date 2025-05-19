@@ -4,9 +4,12 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\JwtMiddleware;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\OrderManagement;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -24,6 +27,7 @@ Route::middleware('jwt.auth')->group(function () {
         Route::post('/retailers/{id}/approve', [AdminController::class, 'approveRetailer']);
         Route::post('/users/{id}/block', [AdminController::class, 'blockUser']);
         Route::post('/users/{id}/unblock', [AdminController::class, 'unblockUser']);
+        Route::get('/unapproved-retailers', [AdminController::class, 'getUnapprovedRetailers']);
     });
 });
 
@@ -39,6 +43,7 @@ Route::middleware([JwtMiddleware::class . ':retailer,admin'])->group(function ()
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
+    Route::get('/shop/{shopId}', [ProductController::class, 'getByShop']);
     Route::get('/retailer/products', [ProductController::class, 'getRetailerProducts']);
     Route::get('/retailer/products/{retailerId}', [ProductController::class, 'getRetailerProducts']);
 });
@@ -60,9 +65,36 @@ Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
 
 
 
-Route::middleware([JwtMiddleware::class . ':user,retailer'])->group(function () {
+Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
      Route::post('/cart/add', [CartController::class, 'addToCart']);
      Route::post('/cart/count', [CartController::class, 'cartCount']);
     Route::get('/cart', [CartController::class, 'getCart']);
     Route::delete('/cart/remove', [CartController::class, 'deleteCart']);
+    Route::put('/cart/update-quantity', [CartController::class, 'updateCartQuantity']);
+});
+
+
+// Shop routes
+Route::middleware([JwtMiddleware::class .':retailer'])->group(function () {
+    Route::post('/shops', [ShopController::class, 'store']);
+    Route::get('/shops/user/{userId?}', [ShopController::class, 'getUserShops']);
+    Route::get('/shops/all', [ShopController::class, 'getAllShops'])->middleware('admin');
+    Route::get('/shops/{id}', [ShopController::class, 'show']);
+    Route::put('/shops/{id}', [ShopController::class, 'update']);
+    Route::delete('/shops/{id}', [ShopController::class, 'destroy']);
+});
+
+Route::prefix('payment')->group(function () {
+    Route::post('/create', [PaymentController::class, 'createPayment']);
+    Route::get('/success', [PaymentController::class, 'paymentSuccess']);
+});
+
+// Order routes
+Route::prefix('orders')->group(function () {
+    Route::get('/', [OrderManagement::class, 'getUserOrders']);
+    Route::get('/shop', [OrderManagement::class, 'getShopOrders']);
+    Route::get('/{orderId}', [OrderManagement::class, 'getOrderDetails']);
+    Route::post('/{orderItemId}/cancel', [OrderManagement::class, 'requestCancellation']);
+    Route::put('/{orderItemId}/process-cancellation', [OrderManagement::class, 'processCancellation']);
+    Route::put('/{orderItemId}/status', [OrderManagement::class, 'updateOrderStatus']);
 });

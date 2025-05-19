@@ -11,7 +11,7 @@ class Product extends Model
 
     protected $fillable = [
         'product_id',
-        'retailer_id',
+        'shop_id', 
         'name',
         'description',
         'price',
@@ -36,8 +36,8 @@ class Product extends Model
         'stock_quantity' => 'integer',
     ];
 
-    public function retailer()
+    public function shops()
     {
-        return $this->belongsTo(User::class, 'retailer_id');
+        return $this->belongsTo(Shop::class, 'shop_id', 'shop_id');
     }
 }

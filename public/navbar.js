@@ -115,7 +115,9 @@ document.addEventListener('DOMContentLoaded', function() {
       '/dashboard': 'dashboardBtn',
       '/traders': 'tradersBtn',
       '/users': 'usersBtn',
-      '/profile': 'profileBtn'
+      '/profile': 'profileBtn',
+      '/manage-shop': 'shop',
+      '/approve-traders': 'approve'
     }[currentPath];
 
     if (activeButton) {

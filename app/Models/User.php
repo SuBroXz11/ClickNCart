@@ -101,4 +101,10 @@ public function getJWTCustomClaims()
     {
         return $this->status === self::STATUS_BLOCKED;
     }
+
+
+public function shops()
+{
+    return $this->hasMany(Shop::class, 'user_id');
+}
 }

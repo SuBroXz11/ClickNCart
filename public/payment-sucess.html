@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - ClickNCart</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --primary-dark: #5649c0;
+            --secondary: #00cec9;
+            --dark: #2d3436;
+            --light: #f5f6fa;
+            --success: #00b894;
+            --warning: #fdcb6e;
+            --danger: #d63031;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--light);
+            color: var(--dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .payment-success-container {
+            background: white;
+            border-radius: 10px;
+            padding: 3rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 5rem;
+            color: var(--success);
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+        }
+
+        p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 2rem;
+            line-height: 1.6;
+        }
+
+        .order-details {
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .order-details h3 {
+            font-size: 1.3rem;
+            margin-bottom: 1rem;
+            color: var(--dark);
+            border-bottom: 1px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.8rem;
+        }
+
+        .detail-row:last-child {
+            margin-bottom: 0;
+            font-weight: bold;
+            padding-top: 0.8rem;
+            border-top: 1px solid #eee;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+            margin: 0.5rem;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
+        }
+
+        .btn-outline {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        @media (max-width: 600px) {
+            .payment-success-container {
+                padding: 2rem 1.5rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            p {
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="payment-success-container animate__animated animate__fadeIn">
+        <div class="success-icon">
+            <i class="fas fa-check-circle"></i>
+        </div>
+        <h1>Payment Successful!</h1>
+        <p>Thank you for your purchase. Your order has been placed successfully and will be processed shortly.</p>
+        
+        <div class="order-details">
+            <h3>Order Details</h3>
+            <div class="detail-row">
+                <span>Order ID:</span>
+                <span id="orderId">Loading...</span>
+            </div>
+            <div class="detail-row">
+                <span>Transaction ID:</span>
+                <span id="transactionId">Loading...</span>
+            </div>
+            <div class="detail-row">
+                <span>Date:</span>
+                <span id="orderDate">Loading...</span>
+            </div>
+            <div class="detail-row">
+                <span>Total Amount:</span>
+                <span id="orderAmount">Loading...</span>
+            </div>
+        </div>
+        
+        <p>A confirmation email has been sent to your registered email address.</p>
+        
+        <div class="action-buttons">
+            <a href="/orders" class="btn btn-primary">View Your Orders</a>
+            <a href="/" class="btn btn-outline">Continue Shopping</a>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Extract token from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const payerId = urlParams.get('PayerID');
+            
+            if (!token || !payerId) {
+                // Handle error case
+                document.querySelector('h1').textContent = 'Payment Processing Error';
+                document.querySelector('p').textContent = 'We encountered an issue processing your payment. Please check your orders or contact support.';
+                document.querySelector('.success-icon').innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
+                return;
+            }
+            
+            try {
+                // Call backend to verify payment
+                const authToken = localStorage.getItem('auth_token');
+                const response = await fetch(`${base_url}/api/payment/success?token=${token}&PayerID=${payerId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Update UI with order details
+                    document.getElementById('orderId').textContent = data.data.order_id;
+                    document.getElementById('transactionId').textContent = data.data.transaction_id;
+                    document.getElementById('orderDate').textContent = new Date(data.data.created_at).toLocaleString();
+                    document.getElementById('orderAmount').textContent = `NPR ${data.data.totalAmountWithTax.toFixed(2)}`;
+                } else {
+                    // Handle payment verification failure
+                    document.querySelector('h1').textContent = 'Payment Verification Failed';
+                    document.querySelector('p').textContent = data.message || 'We encountered an issue verifying your payment. Please check your orders or contact support.';
+                    document.querySelector('.success-icon').innerHTML = '<i class="fas fa-exclamation-circle" style="color: var(--warning);"></i>';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                document.querySelector('h1').textContent = 'Error Processing Payment';
+                document.querySelector('p').textContent = 'An error occurred while processing your payment. Please check your orders or contact support.';
+                document.querySelector('.success-icon').innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
+            }
+        });
+        
+        // Define base_url (should match your API URL)
+        const base_url = 'http://localhost:8000';
+    </script>
+</body>
+</html>

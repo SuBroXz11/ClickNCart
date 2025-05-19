@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\AddToCartRequest;
 use App\Http\Requests\DeleteCartRequest;
 use App\Http\Requests\GetCartRequest;
+use App\Http\Requests\UpdateCartQuantityRequest;
 use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\JsonResponse;
@@ -18,7 +19,7 @@ class CartController extends Controller
      */
     public function addToCart(AddToCartRequest $request): JsonResponse
     {
-          $user = JWTAuth::parseToken()->authenticate();
+        $user = JWTAuth::parseToken()->authenticate();
         $product = Product::findOrFail($request->product_id);
 
         // Check if product is already in cart
@@ -51,7 +52,7 @@ class CartController extends Controller
      */
     public function getCart(): JsonResponse
     {
-          $user = JWTAuth::parseToken()->authenticate();
+        $user = JWTAuth::parseToken()->authenticate();
 
         $cartItems = Cart::with('product')
                         ->where('user_id', $user->id)
@@ -68,38 +69,36 @@ class CartController extends Controller
     }
 
     public function cartCount(): JsonResponse
-{
-    try {
-        // Authenticate the user using JWT token
-        $user = JWTAuth::parseToken()->authenticate();
+    {
+        try {
+            // Authenticate the user using JWT token
+            $user = JWTAuth::parseToken()->authenticate();
 
-        // Get cart items with product details
-        $cartItems = Cart::with('product')
-                        ->where('user_id', $user->id)
-                        ->get();
+            // Get cart items with product details
+            $cartItems = Cart::with('product')
+                            ->where('user_id', $user->id)
+                            ->get();
 
-        // Calculate totals
-        $totalItems = $cartItems->sum('quantity');
-       
+            // Calculate totals
+            $totalItems = $cartItems->sum('quantity');
+           
+            return response()->json([
+                'success' => true,
+                'cart_items_count' => $cartItems->count(), // Number of distinct products
+                'total_quantity' => $totalItems, // Total quantity of all items
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'cart_items_count' => $cartItems->count(), // Number of distinct products
-            'total_quantity' => $totalItems, // Total quantity of all items
-        ]);
-
-    } catch (\Exception $e) {
-        return response()->json([
-            'success' => false,
-            'message' => 'Failed to retrieve cart count: ' . $e->getMessage()
-        ], 500);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to retrieve cart count: ' . $e->getMessage()
+            ], 500);
+        }
     }
-}
-
 
     public function deleteCart(DeleteCartRequest $request): JsonResponse
     {
-          $user = JWTAuth::parseToken()->authenticate();
+        $user = JWTAuth::parseToken()->authenticate();
 
         $deleted = Cart::where('user_id', $user->id)
                       ->where('product_id', $request->product_id)
@@ -117,5 +116,54 @@ class CartController extends Controller
             'success' => false,
             'message' => 'Product not found in cart'
         ], 404);
+    }
+
+    /**
+     * Update product quantity in cart
+     */
+    public function updateCartQuantity(UpdateCartQuantityRequest $request): JsonResponse
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+
+        $cartItem = Cart::where('user_id', $user->id)
+                       ->where('product_id', $request->product_id)
+                       ->first();
+
+        if (!$cartItem) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found in cart'
+            ], 404);
+        }
+
+        // Validate the new quantity (minimum 1)
+        $validated = $request->validated();
+        if ($validated['quantity'] < 1) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quantity must be at least 1'
+            ], 422);
+        }
+
+        // Check product stock if needed
+        $product = Product::find($request->product_id);
+        if ($product && $validated['quantity'] > $product->stock_quantity) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Requested quantity exceeds available stock',
+                'max_available' => $product->stock_quantity
+            ], 422);
+        }
+
+        // Update the quantity
+        $cartItem->quantity = $validated['quantity'];
+        $cartItem->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cart quantity updated successfully',
+            'cart_item' => $cartItem->load('product'),
+            'new_quantity' => $cartItem->quantity
+        ]);
     }
 }
