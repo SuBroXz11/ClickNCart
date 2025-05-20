@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Payment Successful - ClickNCart</title>
+      <link rel="preload" href="./font/mosvita.otf" as="font" type="font/otf" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
@@ -18,11 +19,20 @@
             --danger: #d63031;
         }
 
+         @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+
+       
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
         body {
@@ -93,6 +103,19 @@
             border-top: 1px solid #eee;
         }
 
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .status-processing {
+            background-color: #fff3cd;
+            color: #856404;
+        }
+
         .btn {
             display: inline-block;
             padding: 0.8rem 2rem;
@@ -158,8 +181,8 @@
                 <span id="transactionId">Loading...</span>
             </div>
             <div class="detail-row">
-                <span>Date:</span>
-                <span id="orderDate">Loading...</span>
+                <span>Status:</span>
+                <span id="orderStatus"><span class="status-badge status-processing">Processing</span></span>
             </div>
             <div class="detail-row">
                 <span>Total Amount:</span>
@@ -183,10 +206,8 @@
             const payerId = urlParams.get('PayerID');
             
             if (!token || !payerId) {
-                // Handle error case
-                document.querySelector('h1').textContent = 'Payment Processing Error';
-                document.querySelector('p').textContent = 'We encountered an issue processing your payment. Please check your orders or contact support.';
-                document.querySelector('.success-icon').innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
+                showError('Payment Processing Error', 
+                         'We encountered an issue processing your payment. Please check your orders or contact support.');
                 return;
             }
             
@@ -207,24 +228,53 @@
                     // Update UI with order details
                     document.getElementById('orderId').textContent = data.data.order_id;
                     document.getElementById('transactionId').textContent = data.data.transaction_id;
-                    document.getElementById('orderDate').textContent = new Date(data.data.created_at).toLocaleString();
-                    document.getElementById('orderAmount').textContent = `NPR ${data.data.totalAmountWithTax.toFixed(2)}`;
+                    document.getElementById('orderAmount').textContent = `$${data.data.amount}`;
+                    
+                    // Update status display
+                    updateStatusBadge(data.data.status);
                 } else {
-                    // Handle payment verification failure
-                    document.querySelector('h1').textContent = 'Payment Verification Failed';
-                    document.querySelector('p').textContent = data.message || 'We encountered an issue verifying your payment. Please check your orders or contact support.';
-                    document.querySelector('.success-icon').innerHTML = '<i class="fas fa-exclamation-circle" style="color: var(--warning);"></i>';
+                    showError('Payment Verification Failed', 
+                              data.message || 'We encountered an issue verifying your payment. Please check your orders or contact support.');
                 }
             } catch (error) {
                 console.error('Error:', error);
-                document.querySelector('h1').textContent = 'Error Processing Payment';
-                document.querySelector('p').textContent = 'An error occurred while processing your payment. Please check your orders or contact support.';
-                document.querySelector('.success-icon').innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
+                showError('Error Processing Payment', 
+                         'An error occurred while processing your payment. Please check your orders or contact support.');
             }
         });
         
+        function updateStatusBadge(status) {
+            const statusElement = document.getElementById('orderStatus');
+            let badgeClass = 'status-processing';
+            let statusText = 'Processing';
+            
+            switch(status.toLowerCase()) {
+                case 'completed':
+                    badgeClass = 'status-completed';
+                    statusText = 'Completed';
+                    break;
+                case 'shipped':
+                    badgeClass = 'status-shipped';
+                    statusText = 'Shipped';
+                    break;
+                case 'cancelled':
+                    badgeClass = 'status-cancelled';
+                    statusText = 'Cancelled';
+                    break;
+            }
+            
+            statusElement.innerHTML = `<span class="status-badge ${badgeClass}">${statusText}</span>`;
+        }
+        
+        function showError(title, message) {
+            document.querySelector('h1').textContent = title;
+            document.querySelector('p').textContent = message;
+            document.querySelector('.success-icon').innerHTML = '<i class="fas fa-times-circle" style="color: var(--danger);"></i>';
+            document.querySelector('.order-details').style.display = 'none';
+        }
+        
         // Define base_url (should match your API URL)
-        const base_url = 'http://localhost:8000';
+        const base_url = 'http://localhost:8000'; // Update this with your actual API URL
     </script>
 </body>
 </html>

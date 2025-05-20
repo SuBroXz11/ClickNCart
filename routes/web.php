@@ -49,6 +49,13 @@ Route::get('/checkout', function () {
     return response()->file(resource_path('views/products/checkout.html'));
 });
 
+Route::get('/payment/success', function () {
+    return response()->file(resource_path('views/payment/payment-success.html'));
+});
+
+Route::get('/payment/cancel', function () {
+    return response()->file(resource_path('views/payment/cancel.html'));
+});
 Route::get('/product/{id}', function ($id) {
     $html = file_get_contents(resource_path('views/products/individualProduct.html'));
     $html = str_replace('<!--PRODUCT_ID-->', $id, $html);

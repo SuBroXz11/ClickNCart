@@ -10,7 +10,7 @@ use App\Models\Cart;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Tymon\JWTAuth\Facades\JWTAuth;
-
+use Illuminate\Support\Facades\Log;
 class PaymentController extends Controller
 {
     private $paypalBaseUrl;
@@ -58,24 +58,27 @@ class PaymentController extends Controller
         $shipping = $request->shipping ?? 0;
         $total = $subtotal + $tax + $shipping;
 
-        // Create order first
+      
+
         $order = Order::create([
-            'order_id' => 'ORD' . strtoupper(uniqid()),
-            'user_id' => $user->id,
-            'subtotal' => $subtotal,
-            'tax' => $tax,
-            'shipping' => $shipping,
-            'total' => $total,
-            'payment_status' => 'pending',
-            'status' => 'pending',
-        ]);
+    'order_id' => 'ORD' . strtoupper(uniqid()),
+    'user_id' => $user->id,
+    'subtotal' => $subtotal, // Make sure this matches your migration
+    'tax' => $tax,
+    'shipping' => $shipping,
+    'total' => $total,
+    'payment_status' => 'pending',
+    'status' => 'pending',
+]);
+
+      
 
         // Create order items
         foreach ($cartItems as $item) {
             OrderItem::create([
                 'order_item_id' => 'ORDITM' . strtoupper(uniqid()),
                 'order_id' => $order->id,
-                'product_id' => $item->product_id,
+                'product_id' => $item->product->product_id,
                 'shop_id' => $item->product->shop_id,
                 'product_name' => $item->product->name,
                 'price' => $item->product->price,
@@ -85,11 +88,13 @@ class PaymentController extends Controller
         }
 
         // Get PayPal access token
-        $tokenResponse = Http::withBasicAuth($this->clientId, $this->secret)
-            ->asForm()
-            ->post($this->paypalBaseUrl . '/v1/oauth2/token', [
-                'grant_type' => 'client_credentials'
-            ]);
+        $tokenResponse = Http::withOptions([
+    'verify' => false // Disables SSL verification
+])->withBasicAuth($this->clientId, $this->secret)
+  ->asForm()
+  ->post($this->paypalBaseUrl . '/v1/oauth2/token', [
+      'grant_type' => 'client_credentials'
+  ]);
 
         if (!$tokenResponse->successful()) {
             return response()->json([
@@ -101,7 +106,9 @@ class PaymentController extends Controller
         $accessToken = $tokenResponse->json()['access_token'];
 
         // Create PayPal order
-        $paypalResponse = Http::withToken($accessToken)
+        $paypalResponse = Http::withOptions([
+    'verify' => false
+])->withToken($accessToken)
             ->withHeaders([
                 'Content-Type' => 'application/json',
                 'Prefer' => 'return=representation'
@@ -181,100 +188,147 @@ class PaymentController extends Controller
      * Handle PayPal payment success
      */
     public function paymentSuccess(Request $request)
-    {
-        $request->validate([
-            'token' => 'required',
-            'PayerID' => 'required'
-        ]);
+{
+    // Validate incoming request
+    $request->validate([
+        'token' => 'required', // This should be the PayPal Order ID
+        'PayerID' => 'required'
+    ]);
 
-        // Get PayPal access token
+    try {
+        // 1. Get PayPal access token
         $tokenResponse = Http::withBasicAuth($this->clientId, $this->secret)
+            ->withoutVerifying()
             ->asForm()
             ->post($this->paypalBaseUrl . '/v1/oauth2/token', [
                 'grant_type' => 'client_credentials'
             ]);
 
         if (!$tokenResponse->successful()) {
+            Log::error('PayPal Token Error', [
+                'status' => $tokenResponse->status(),
+                'response' => $tokenResponse->json()
+            ]);
+            
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to authenticate with PayPal'
+                'message' => 'Failed to authenticate with PayPal',
+                'error' => $tokenResponse->json()
             ], 500);
         }
 
         $accessToken = $tokenResponse->json()['access_token'];
 
-        // Capture PayPal payment
+        // 2. Capture the payment
         $captureResponse = Http::withToken($accessToken)
+            ->withoutVerifying()
             ->withHeaders([
-                'Content-Type' => 'application/json'
+                'Content-Type' => 'application/json',
+                'Prefer' => 'return=representation',
+                'PayPal-Request-Id' => uniqid()
             ])
-            ->post($this->paypalBaseUrl . '/v2/checkout/orders/' . $request->token . '/capture');
+            ->post($this->paypalBaseUrl . '/v2/checkout/orders/' . $request->token . '/capture', (object)[]);
 
         if (!$captureResponse->successful()) {
+            Log::error('PayPal Capture Error', [
+                'order_id' => $request->token,
+                'status' => $captureResponse->status(),
+                'response' => $captureResponse->json(),
+                'endpoint' => $this->paypalBaseUrl . '/v2/checkout/orders/' . $request->token . '/capture'
+            ]);
+            
             return response()->json([
                 'success' => false,
                 'message' => 'Payment capture failed',
-                'errors' => $captureResponse->json()
-            ], 500);
+                'error' => $captureResponse->json()
+            ], 400);
         }
 
         $captureData = $captureResponse->json();
 
-        // Update order status
-        $order = Order::where('transaction_id', $request->token)->firstOrFail();
-        
+        // 3. Find and update the order
+        $order = Order::where('transaction_id', $request->token)->first();
+
+        if (!$order) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Order not found'
+            ], 404);
+        }
+
+        // 4. Update order status
         $order->update([
             'payment_status' => 'completed',
             'status' => 'processing',
-            'transaction_id' => $captureData['id']
+            'paypal_capture_id' => $captureData['id'],
+            'payer_id' => $request->PayerID
         ]);
 
-        // Update order items status
+        // 5. Update order items
         $order->items()->update(['status' => 'processing']);
 
-        // Clear user's cart
+        // 6. Clear user's cart
         Cart::where('user_id', $order->user_id)->delete();
 
-        // Update product stock
+        // 7. Update product stock
         foreach ($order->items as $item) {
             Product::where('product_id', $item->product_id)
                 ->decrement('stock_quantity', $item->quantity);
         }
 
+        // 8. Send confirmation email (optional)
+        // Mail::to($order->user->email)->send(new OrderConfirmation($order));
+
         return response()->json([
             'success' => true,
             'message' => 'Payment successful',
-            'data' => $this->formatOrderResponse($order)
+            'data' => [
+                'order_id' => $order->id,
+                'transaction_id' => $captureData['id'],
+                'status' => $order->status,
+                'amount' => $captureData['purchase_units'][0]['payments']['captures'][0]['amount']['value'] ?? null
+            ]
         ]);
-    }
+
+    } catch (\Exception $e) {
+        Log::error('Payment Processing Error', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'An unexpected error occurred',
+            'error' => env('APP_DEBUG') ? $e->getMessage() : null
+        ]);
+    }}
+
 
     /**
      * Format order response
-     */
-    private function formatOrderResponse($order)
-    {
-        return [
-            'order_id' => $order->order_id,
-            'user_id' => $order->user_id,
-            'transaction_id' => $order->transaction_id,
-            'totalAmount' => $order->subtotal,
-            'totalAmountWithTax' => $order->total,
-            'tax' => $order->tax,
-            'shipping' => $order->shipping,
-            'payment_status' => $order->payment_status,
-            'status' => $order->status,
-            'created_at' => $order->created_at,
-            'products' => $order->items->map(function($item) {
-                return [
-                    'product_id' => $item->product_id,
-                    'product_name' => $item->product_name,
-                    'product_quantity' => $item->quantity,
-                    'price' => $item->price,
-                    'total' => $item->total,
-                    'shop_id' => $item->shop_id,
-                    'status' => $item->status
-                ];
-            })
-        ];
-    }
-}
+     */private function formatOrderResponse($order)
+{
+    return [
+        'order_id' => $order->order_id,
+        'user_id' => $order->user_id,
+        'transaction_id' => $order->transaction_id,
+        'subtotal' => $order->subtotal, // Now matches database
+        'total' => $order->total,
+        'tax' => $order->tax,
+        'shipping' => $order->shipping,
+        'payment_status' => $order->payment_status,
+        'status' => $order->status,
+        'created_at' => $order->created_at,
+        'products' => $order->items->map(function($item) {
+            return [
+                'product_id' => $item->product_id,
+                'product_name' => $item->product_name,
+                'quantity' => $item->quantity,
+                'price' => $item->price,
+                'total' => $item->total,
+                'shop_id' => $item->shop_id,
+                'status' => $item->status
+            ];
+        })
+    ];
+}}

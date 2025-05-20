@@ -12,14 +12,18 @@ return new class extends Migration
             $table->id();
             $table->string('order_id')->unique();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->decimal('total_amount', 10, 2);
+            $table->decimal('subtotal', 10, 2); // Changed from total_amount
             $table->decimal('tax', 10, 2);
+            $table->decimal('shipping', 10, 2)->default(0); // Added
+            $table->decimal('total', 10, 2); // Added
+            $table->string('payment_method')->nullable(); // Added
             $table->string('status')->default('pending');
-            $table->string('payment_status')->default('unpaid');
-            $table->string('payment_method');
-            $table->text('shipping_address');
+            $table->string('payment_status')->default('pending'); // Changed from 'unpaid'
+            $table->text('shipping_address')->nullable();
             $table->text('billing_address')->nullable();
             $table->string('tracking_number')->nullable();
+            $table->text('notes')->nullable(); // Added
+            $table->string('transaction_id')->nullable(); // Added for PayPal
             $table->timestamps();
         });
     }
