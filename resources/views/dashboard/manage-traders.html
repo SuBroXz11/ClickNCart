@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manage Traders | ClickNCart Admin</title>
+
+  <!-- DaisyUI + Tailwind browser build -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Sidebar component -->
+  <script src="./navbar.js" defer></script>
+
+  <style>
+    @font-face {
+      font-family: 'Mosvita';
+      src: url('./font/mosvita.otf') format('opentype');
+    }
+    body { font-family: 'Mosvita', sans-serif; background: #f8fafc; }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div id="app" class="min-h-screen flex">
+    <custom-navbar></custom-navbar>
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <h1 class="text-2xl font-semibold">Manage Traders</h1>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-lg shadow p-6 flex flex-col md:flex-row md:items-end gap-4">
+          <!-- Pending/Active/Blocked -->
+          <div class="form-control w-full md:w-1/4">
+            <label class="label"><span class="label-text">Status</span></label>
+            <select id="filterStatus" class="select select-bordered w-full">
+              <option value="">All</option>
+              <option value="pending">Pending</option>
+              <option value="active">Active</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </div>
+          <!-- Search -->
+          <div class="form-control flex-1">
+            <label class="label"><span class="label-text">Search</span></label>
+            <input id="searchInput" type="text" placeholder="Search name or email…" class="input input-bordered w-full" />
+          </div>
+          <button id="refreshBtn" class="btn btn-primary h-12 mt-2 md:mt-0">Refresh</button>
+        </div>
+
+        <!-- Table -->
+        <div class="bg-white rounded-lg shadow p-6 overflow-x-auto">
+          <div id="tradersTableContainer">
+            <div class="py-16 text-center text-gray-400 animate-pulse">Loading traders…</div>
+          </div>
+        </div>
+
+        <!-- Pagination (if used) -->
+        <div id="pagination" class="flex justify-end space-x-2"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let page = 1, lastPage = 1;
+      const tableCtn = document.getElementById('tradersTableContainer');
+      const pagDiv   = document.getElementById('pagination');
+      const statusEl = document.getElementById('filterStatus');
+      const searchEl = document.getElementById('searchInput');
+      const refresh  = document.getElementById('refreshBtn');
+
+      statusEl.addEventListener('change', () => { page = 1; fetchAndShow(); });
+      searchEl.addEventListener('input', debounce(() => { page = 1; fetchAndShow(); }, 300));
+      refresh.addEventListener('click', () => {
+        statusEl.value = '';
+        searchEl.value = '';
+        page = 1;
+        fetchAndShow();
+      });
+
+      function debounce(fn, d) {
+        let t;
+        return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), d); };
+      }
+
+      function buildQS() {
+        const q = ['role=retailer'];
+        if (statusEl.value) q.push(`status=${statusEl.value}`);
+        if (searchEl.value.trim()) q.push(`q=${encodeURIComponent(searchEl.value.trim())}`);
+        q.push(`page=${page}`);
+        return '?' + q.join('&');
+      }
+
+      async function fetchAndShow() {
+        tableCtn.innerHTML = `<div class="py-16 text-center text-gray-400 animate-pulse">Loading…</div>`;
+        pagDiv.innerHTML = '';
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) return window.location.href = '/login';
+
+        try {
+          const res  = await fetch(`/api/users${buildQS()}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!res.ok) throw 0;
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : (data.data || data.users || []);
+          const meta = Array.isArray(data) ? null : (data.meta || data);
+          renderTable(list, meta);
+        } catch {
+          tableCtn.innerHTML = `<div class="py-16 text-center text-red-500">Failed to load.</div>`;
+        }
+      }
+
+      function renderTable(rows, meta) {
+        if (!rows.length) {
+          tableCtn.innerHTML = `<div class="py-16 text-center text-gray-400">No traders found.</div>`;
+          return;
+        }
+
+        tableCtn.innerHTML = `
+          <table class="table w-full">
+            <thead><tr>
+              <th>Name</th><th>Email</th><th>Status</th><th>Joined</th><th>Actions</th>
+            </tr></thead>
+            <tbody>
+              ${rows.map(u=>`
+                <tr>
+                  <td>${u.name}</td>
+                  <td>${u.email}
+                    ${u.email_verified_at
+                      ? '<span class="badge badge-success ml-2">Verified</span>'
+                      : '<span class="badge badge-warning ml-2">Unverified</span>'}
+                  </td>
+                  <td>${
+                    u.status==='active'?'<span class="badge badge-accent">Active</span>'
+                    :u.status==='blocked'?'<span class="badge badge-error">Blocked</span>'
+                    :'<span class="badge badge-warning">Pending</span>'
+                  }</td>
+                  <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                  <td>${renderActions(u)}</td>
+                </tr>`).join('')}
+            </tbody>
+          </table>`;
+
+        if (meta && meta.last_page > 1) {
+          lastPage = meta.last_page;
+          pagDiv.innerHTML = Array.from({length:lastPage},(_,i)=>`
+            <button onclick="goto(${i+1})"
+              class="btn btn-sm ${page===i+1?'btn-primary':'btn-outline'} mr-2">
+              ${i+1}
+            </button>`).join('');
+        }
+      }
+
+      function renderActions(u) {
+        const bs = [];
+        if (u.status==='pending') {
+          bs.push(`<button class="btn btn-sm btn-success mr-2" onclick="act('/api/retailers/${u.id}/approve')">Approve</button>`);
+        }
+        if (u.status==='active') {
+          bs.push(`<button class="btn btn-sm btn-error mr-2" onclick="act('/api/users/${u.id}/block')">Block</button>`);
+        }
+        if (u.status==='blocked') {
+          bs.push(`<button class="btn btn-sm btn-primary" onclick="act('/api/users/${u.id}/unblock')">Unblock</button>`);
+        }
+        return bs.join('');
+      }
+
+      window.act = async url => {
+        if (!confirm('Confirm?')) return;
+        const token = localStorage.getItem('auth_token');
+        try {
+          const r = await fetch(url,{method:'POST',headers:{'Authorization':`Bearer ${token}`}})
+          if (!r.ok) throw 0;
+          fetchAndShow();
+        } catch { alert('Action failed.') }
+      };
+
+      window.goto = p => { page = p; fetchAndShow(); };
+
+      fetchAndShow();
+    });
+  </script>
+</body>
+</html>

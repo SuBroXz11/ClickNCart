@@ -636,8 +636,7 @@
     </div>
 
     <script>
-        // Base URL for API
-        const base_url = 'http://localhost:8000';
+                // Base URL for API
         
         // DOM Elements
         const shopsContainer = document.getElementById('shopsContainer');
@@ -680,7 +679,7 @@
         // Load shops from API
         async function loadShops(token) {
             try {
-                const response = await fetch(`${base_url}/api/shops/user`, {
+                const response = await fetch(`/api/shops/user`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`,
@@ -889,7 +888,7 @@
             };
 
             try {
-                const response = await fetch(`${base_url}/api/shops`, {
+                const response = await fetch(`/api/shops`, {
                     method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
@@ -933,7 +932,7 @@
             };
 
             try {
-                const response = await fetch(`${base_url}/api/shops/${currentShopId}`, {
+                const response = await fetch(`/api/shops/${currentShopId}`, {
                     method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,
@@ -966,7 +965,7 @@
             }
 
             try {
-                const response = await fetch(`${base_url}/api/shops/${currentShopId}`, {
+                const response = await fetch(`/api/shops/${currentShopId}`, {
                     method: 'DELETE',
                     headers: {
                         'Authorization': `Bearer ${authToken}`,

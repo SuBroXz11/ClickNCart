@@ -26,7 +26,7 @@ Route::get('/manage-shop', function () {
     return response()->file(resource_path('views/dashboard/manage-shop.html'));
 });
 Route::get('/approve-traders', function () {
-    return response()->file(resource_path('views/auth/approve-admin.html'));
+    return response()->file(resource_path('views/auth/approve-traders.html'));
 });
 
 Route::get('/profile', function () {
@@ -54,3 +54,9 @@ Route::get('/product/{id}', function ($id) {
     $html = str_replace('<!--PRODUCT_ID-->', $id, $html);
     return response($html)->header('Content-Type', 'text/html');
 });
+
+Route::get('/users', function () {
+    return response()->file(resource_path('views/dashboard/manage-users.html'));
+});
+
+Route::get('/traders', fn() => response()->file(resource_path('views/dashboard/manage-traders.html')));
