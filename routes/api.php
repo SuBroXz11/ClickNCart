@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\JwtMiddleware;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\OrderManagement;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -97,4 +98,9 @@ Route::prefix('orders')->group(function () {
     Route::post('/{orderItemId}/cancel', [OrderManagement::class, 'requestCancellation']);
     Route::put('/{orderItemId}/process-cancellation', [OrderManagement::class, 'processCancellation']);
     Route::put('/{orderItemId}/status', [OrderManagement::class, 'updateOrderStatus']);
+});
+
+Route::middleware('auth:api')->group(function () {
+    Route::get('user', [ProfileController::class, 'show']);
+    Route::put('user', [ProfileController::class, 'update']);
 });

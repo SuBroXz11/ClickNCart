@@ -60,3 +60,5 @@ Route::get('/users', function () {
 });
 
 Route::get('/traders', fn() => response()->file(resource_path('views/dashboard/manage-traders.html')));
+
+Route::get('/user-profile', fn() => response()->file(resource_path('views/profile/profile.html')));

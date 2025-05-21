@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>User Profile | ClickNCart</title>
+  <!-- FontAwesome, Animate.css, Tailwind, DaisyUI -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@2.51.5/dist/full.css" rel="stylesheet" />
+  <!-- SweetAlert2 -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    body {
+      background-color: #f5f6fa;
+      color: #2d3436;
+      font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    header {
+      background-color: white;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+      position: fixed;
+      width: 100%;
+      z-index: 1000;
+    }
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 5%;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      color: #6c5ce7;
+    }
+    .logo i {
+      margin-right: 10px;
+      color: #00cec9;
+    }
+    .nav-links {
+      display: flex;
+      list-style: none;
+    }
+    .nav-links li {
+      margin-left: 2rem;
+    }
+    .nav-links a {
+      text-decoration: none;
+      color: #2d3436;
+      font-weight: 500;
+      transition: color 0.3s;
+      position: relative;
+    }
+    .nav-links a:hover {
+      color: #6c5ce7;
+    }
+    .nav-links a::after {
+      content: '';
+      position: absolute;
+      width: 0;
+      height: 2px;
+      background: #6c5ce7;
+      bottom: -5px;
+      left: 0;
+      transition: width 0.3s;
+    }
+    .nav-links a:hover::after {
+      width: 100%;
+    }
+    .btn-outline {
+      border: 2px solid #6c5ce7;
+      padding: 10px 20px;
+      color: #6c5ce7;
+      border-radius: 40px;
+    }
+    .btn-outline:hover {
+      background: #6c5ce7;
+      color: white;
+    }
+    .btn-primary {
+      background: #6c5ce7;
+      color: white;
+      border: 2px solid #6c5ce7;
+      padding: 10px 20px;
+      border-radius: 40px;
+      transition: all 0.3s;
+    }
+    .btn-primary:hover {
+      background: #5649c0;
+      border-color: #5649c0;
+    }
+    /* Responsive */
+    @media (max-width: 768px) {
+      .navbar {
+        flex-direction: column;
+        padding: 1rem;
+      }
+      .nav-links {
+        margin-top: 1rem;
+      }
+      .nav-links li {
+        margin-left: 1rem;
+        margin-right: 1rem;
+      }
+      .auth-buttons {
+        margin-top: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header/Navbar -->
+  <header>
+    <nav class="navbar">
+      <div class="logo">
+        <i class="fas fa-shopping-cart"></i>
+        <span>ClickNCart</span>
+      </div>
+      <ul class="nav-links">
+        <li><a href="/">Home</a></li>
+        <li><a href="/products">Product</a></li>
+        <li><a href="/contact">Contact</a></li>
+      </ul>
+      <div id="navAuth" class="flex items-center space-x-4">
+        <div id="guestLinks" class="flex space-x-4">
+          <a href="/login" class="btn btn-outline">Login</a>
+          <a href="/register" class="btn btn-primary">Sign Up</a>
+        </div>
+        <div id="userLinks" class="relative hidden">
+          <button id="userBtn" class="flex items-center space-x-1 px-4 py-2 rounded hover:bg-gray-100 transition">
+            <span id="userName" class="font-medium"></span>
+            <i class="fas fa-chevron-down text-gray-600"></i>
+          </button>
+          <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg hidden">
+            <a href="/user-profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Profile</a>
+            <button id="logoutBtn" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+              Logout
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <!-- Main Content -->
+  <main class="flex flex-col items-center justify-center min-h-screen pt-32 pb-10 bg-[#f5f6fa]">
+    <div class="card w-full max-w-lg bg-white shadow-2xl rounded-3xl border border-gray-100 p-8">
+      <div class="flex flex-col items-center space-y-4 mb-6">
+        <div class="avatar mx-auto">
+          <div class="w-28 h-28 rounded-full ring ring-primary ring-offset-base-100 ring-offset-2">
+            <img id="profile-img" src="https://via.placeholder.com/150" alt="Profile Picture" />
+          </div>
+        </div>
+        <span class="font-semibold text-lg text-gray-700">Profile Information</span>
+      </div>
+      <form id="profile-form" class="space-y-5">
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text">Name</span></label>
+          <input type="text" id="name" name="name" class="input input-bordered w-full" required />
+        </div>
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text">Email</span></label>
+          <input type="email" id="email" name="email" class="input input-bordered w-full bg-gray-100" disabled />
+        </div>
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text">Address</span></label>
+          <textarea id="address" name="address" class="textarea textarea-bordered w-full" rows="2"></textarea>
+        </div>
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text">Phone</span></label>
+          <input type="tel" id="phone" name="phone_number" class="input input-bordered w-full" />
+        </div>
+        <div class="form-control w-full">
+          <label class="label"><span class="label-text">Profile Picture</span></label>
+          <input type="file" id="profile_picture" name="profile_picture" class="file-input file-input-bordered w-full" accept="image/*" />
+        </div>
+        <button type="submit" class="btn btn-primary w-full text-lg tracking-wide">Update Profile</button>
+      </form>
+    </div>
+  </main>
+
+  <script>
+    // Navbar Auth Logic
+    document.addEventListener('DOMContentLoaded', () => {
+      const userStr = localStorage.getItem('user');
+      let user = null;
+
+      try {
+        user = userStr ? JSON.parse(userStr) : null;
+      } catch (e) {
+        console.error('Failed to parse user from localStorage', e);
+      }
+
+      const guestLinks = document.getElementById('guestLinks');
+      const userLinks = document.getElementById('userLinks');
+      const userNameEl = document.getElementById('userName');
+      const dropdown = document.getElementById('userDropdown');
+
+      if (user && user.name) {
+        guestLinks.classList.add('hidden');
+        userLinks.classList.remove('hidden');
+        userNameEl.textContent = `Welcome, ${user.name}`;
+
+        document.getElementById('userBtn').addEventListener('click', () => {
+          dropdown.classList.toggle('hidden');
+        });
+
+        document.getElementById('logoutBtn').addEventListener('click', () => {
+          localStorage.removeItem('auth_token');
+          localStorage.removeItem('user');
+          window.location.href = '/';
+        });
+
+        document.addEventListener('click', e => {
+          if (!userLinks.contains(e.target)) {
+            dropdown.classList.add('hidden');
+          }
+        });
+      } else {
+        guestLinks.classList.remove('hidden');
+        userLinks.classList.add('hidden');
+      }
+    });
+
+    // Profile Form Logic
+    const token = localStorage.getItem('auth_token');
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('name').value = user.name || '';
+      document.getElementById('email').value = user.email || '';
+      document.getElementById('address').value = user.address || '';
+      document.getElementById('phone').value = user.phone_number || '';
+
+      if (user.profile_picture) {
+        document.getElementById('profile-img').src = `/storage/${user.profile_picture}`;
+      }
+    });
+
+    document.getElementById('profile-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const formData = new FormData();
+      formData.append('name', document.getElementById('name').value);
+      formData.append('address', document.getElementById('address').value);
+      formData.append('phone_number', document.getElementById('phone').value);
+
+      const fileInput = document.getElementById('profile_picture');
+      if (fileInput.files.length > 0) {
+        formData.append('profile_picture', fileInput.files[0]);
+      }
+
+      // Laravel method-override for PUT
+      formData.append('_method', 'PUT');
+
+      Swal.fire({
+        title: 'Updating...',
+        text: 'Please wait while we update your profile.',
+        allowOutsideClick: false,
+        didOpen: () => Swal.showLoading()
+      });
+
+      try {
+        const res = await fetch('/api/user', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+          body: formData,
+        });
+
+        if (!res.ok) {
+          const err = await res.json();
+          Swal.close();
+          return Swal.fire('Error', err.message || 'Error updating profile', 'error');
+        }
+
+        const updated = await res.json();
+        localStorage.setItem('user', JSON.stringify(updated));
+        if (updated.profile_picture) {
+          document.getElementById('profile-img').src = `/storage/${updated.profile_picture}`;
+        }
+        Swal.close();
+        Swal.fire('Success', 'Profile updated successfully!', 'success');
+        window.location.reload();
+      } catch (error) {
+        Swal.close();
+        Swal.fire('Error', 'Something went wrong.', 'error');
+      }
+    });
+  </script>
+</body>
+</html>
