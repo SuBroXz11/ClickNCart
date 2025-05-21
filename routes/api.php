@@ -10,6 +10,7 @@ use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\JwtMiddleware;
 use App\Http\Controllers\Api\CartController;
 use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\Api\OrderManagement;
 
 Route::post('/register', [AuthController::class, 'register']);
@@ -103,4 +104,10 @@ Route::prefix('orders')->group(function () {
 Route::middleware('auth:api')->group(function () {
     Route::get('user', [ProfileController::class, 'show']);
     Route::put('user', [ProfileController::class, 'update']);
+});
+
+Route::prefix('wishlist')->middleware('auth:api')->group(function(){
+    Route::get('/',      [WishlistController::class,'index']);
+    Route::post('add',   [WishlistController::class,'add']);
+    Route::delete('remove/{id}', [WishlistController::class,'remove']);
 });

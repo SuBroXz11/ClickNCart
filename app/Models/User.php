@@ -107,4 +107,8 @@ public function shops()
 {
     return $this->hasMany(Shop::class, 'user_id');
 }
+public function wishlist()
+{
+    return $this->hasMany(Wishlist::class);
+}
 }

@@ -1215,6 +1215,10 @@
                         </div>
                         <div class="product-actions">
                             <button class="btn view-details" data-id="${product.product_id}">View Details</button>
+                            <!-- Wishlist button -->
+  <button class="btn add-to-wishlist" data-id="${product.id}">
+    <i class="fas fa-heart"></i>
+  </button>
                             <button class="btn add-to-cart" data-id="${product.id}">Add to Cart</button>
                         </div>
                     </div>
@@ -1238,6 +1242,13 @@
                     addToCart(productId);
                 });
             });
+            document.querySelectorAll('.add-to-wishlist').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    addToWishlist(id);
+                });
+            });
+
         }
 
         function renderPagination(meta) {
@@ -1445,6 +1456,33 @@
         showNotification(error.message || 'Failed to add to cart', false);
     }
 }
+
+    async function addToWishlist(productId) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showNotification('Login to use your wishlist', false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/wishlist/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ product_id: parseInt(productId) })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            showNotification(data.message, true);
+        } catch (err) {
+            console.error(err);
+            showNotification(err.message || 'Failed to update wishlist', false);
+        }
+    }
+
 
 function showNotification(message, isSuccess) {
     const notification = document.createElement('div');
