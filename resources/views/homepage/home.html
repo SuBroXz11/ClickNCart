@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClickNCart - E-commerce Platform for Traders & Users</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @font-face {
             font-family: 'Mosvita';
@@ -133,6 +135,12 @@
             color: white;
             border: 2px solid var(--primary);
             text-decoration: none;
+
+            /* ← add these */
+            padding: 10px 20px;
+            border-radius: 40px;
+
+            transition: all 0.3s;
         }
 
         .btn-primary:hover {
@@ -545,18 +553,37 @@
 
         /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         @keyframes slideInLeft {
-            from { transform: translateX(-50px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(-50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         @keyframes slideInRight {
-            from { transform: translateX(50px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
+            from {
+                transform: translateX(50px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
         }
 
         /* Responsive */
@@ -602,6 +629,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -615,10 +643,26 @@
                 <li><a href="/products">Product</a></li>
                 <li><a href="/contact">Contact</a></li>
             </ul>
-            <div class="auth-buttons">
-                <a href="/login" class="btn btn-outline">Login</a>
-                <a href="/register" class="btn btn-primary">Sign Up</a>
-            </div>
+            <div id="navAuth" class="flex items-center space-x-4">
+                <!-- Guest links -->
+                <div id="guestLinks" class="flex space-x-4">
+                    <a href="/login" class="btn btn-outline">Login</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
+                </div>
+                <!-- User dropdown (hidden by default) -->
+                <div id="userLinks" class="relative hidden">
+                    <button id="userBtn" class="flex items-center space-x-1 px-4 py-2 rounded hover:bg-gray-100 transition">
+                        <span id="userName" class="font-medium"></span>
+                        <i class="fas fa-chevron-down text-gray-600"></i>
+                    </button>
+                    <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg hidden">
+                        <a href="/user-profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <button id="logoutBtn" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+                </div>
         </nav>
     </header>
 
@@ -626,7 +670,8 @@
     <section class="hero">
         <div class="hero-content animate__animated animate__fadeIn">
             <h1>Your <span>E-commerce</span> Platform for Seamless Buying & Selling</h1>
-            <p>ClickNCart connects traders with customers in a powerful marketplace. Create your shop in minutes or discover amazing products from local sellers.</p>
+            <p>ClickNCart connects traders with customers in a powerful marketplace. Create your shop in minutes or
+                discover amazing products from local sellers.</p>
             <div class="hero-buttons">
                 <a href="#" class="btn btn-primary">Start Selling</a>
                 <a href="#" class="btn btn-secondary">Explore Shops</a>
@@ -646,7 +691,8 @@
                     <i class="fas fa-store"></i>
                 </div>
                 <h3>Easy Shop Setup</h3>
-                <p>Traders can create their online store in minutes with our intuitive dashboard and start selling immediately.</p>
+                <p>Traders can create their online store in minutes with our intuitive dashboard and start selling
+                    immediately.</p>
             </div>
             <div class="feature-card animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
                 <div class="feature-icon">
@@ -671,24 +717,29 @@
             <h2>Built for Everyone</h2>
             <p>Whether you're a seller or buyer, ClickNCart has you covered</p>
         </div>
-        
+
         <div class="platform-tabs">
             <button class="tab-btn active" data-tab="traders">For Traders</button>
             <button class="tab-btn" data-tab="users">For Users</button>
         </div>
-        
+
         <div class="platform-content active" id="traders-tab">
             <div class="platform-grid">
                 <div class="platform-card animate__animated animate__slideInLeft">
-                    <div class="platform-card-img" style="background-image: url('https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');"></div>
+                    <div class="platform-card-img"
+                        style="background-image: url('https://images.unsplash.com/photo-1556740738-b6a63e27c4df?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');">
+                    </div>
                     <div class="platform-card-content">
                         <h3>Create Your Digital Storefront</h3>
-                        <p>Set up your online shop with customizable themes and branding to showcase your products professionally.</p>
+                        <p>Set up your online shop with customizable themes and branding to showcase your products
+                            professionally.</p>
                         <a href="#" class="btn btn-outline">Learn More</a>
                     </div>
                 </div>
                 <div class="platform-card animate__animated animate__slideInUp">
-                    <div class="platform-card-img" style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');"></div>
+                    <div class="platform-card-img"
+                        style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');">
+                    </div>
                     <div class="platform-card-content">
                         <h3>Powerful Management Tools</h3>
                         <p>Track inventory, process orders, and analyze sales with our comprehensive dashboard.</p>
@@ -696,7 +747,9 @@
                     </div>
                 </div>
                 <div class="platform-card animate__animated animate__slideInRight">
-                    <div class="platform-card-img" style="background-image: url('https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');"></div>
+                    <div class="platform-card-img"
+                        style="background-image: url('https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');">
+                    </div>
                     <div class="platform-card-content">
                         <h3>Reach More Customers</h3>
                         <p>Get discovered by thousands of potential customers searching for products like yours.</p>
@@ -705,11 +758,13 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="platform-content" id="users-tab">
             <div class="platform-grid">
                 <div class="platform-card animate__animated animate__slideInLeft">
-                    <div class="platform-card-img" style="background-image: url('https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');"></div>
+                    <div class="platform-card-img"
+                        style="background-image: url('https://images.unsplash.com/photo-1523275335684-37898b6baf30?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');">
+                    </div>
                     <div class="platform-card-content">
                         <h3>Discover Unique Products</h3>
                         <p>Find items from local sellers and small businesses that you won't find anywhere else.</p>
@@ -717,7 +772,9 @@
                     </div>
                 </div>
                 <div class="platform-card animate__animated animate__slideInUp">
-                    <div class="platform-card-img" style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');"></div>
+                    <div class="platform-card-img"
+                        style="background-image: url('https://images.unsplash.com/photo-1483985988355-763728e1935b?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');">
+                    </div>
                     <div class="platform-card-content">
                         <h3>Seamless Shopping</h3>
                         <p>Enjoy a smooth shopping experience with easy checkout and multiple payment options.</p>
@@ -725,7 +782,9 @@
                     </div>
                 </div>
                 <div class="platform-card animate__animated animate__slideInRight">
-                    <div class="platform-card-img" style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');"></div>
+                    <div class="platform-card-img"
+                        style="background-image: url('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60');">
+                    </div>
                     <div class="platform-card-content">
                         <h3>Support Local Businesses</h3>
                         <p>Shop directly from independent sellers and help grow your community's economy.</p>
@@ -742,10 +801,11 @@
             <h2>What Our Users Say</h2>
             <p>Hear from traders and shoppers who use ClickNCart</p>
         </div>
-        
+
         <div class="testimonial-slider">
             <div class="testimonial active">
-                <p class="testimonial-text">"ClickNCart has transformed my small business. Setting up my online store was incredibly easy, and I've doubled my sales in just three months!"</p>
+                <p class="testimonial-text">"ClickNCart has transformed my small business. Setting up my online store
+                    was incredibly easy, and I've doubled my sales in just three months!"</p>
                 <div class="testimonial-author">
                     <img src="https://randomuser.me/api/portraits/women/32.jpg" alt="Sarah J." class="author-img">
                     <div class="author-info">
@@ -755,7 +815,8 @@
                 </div>
             </div>
             <div class="testimonial">
-                <p class="testimonial-text">"As a shopper, I love discovering unique products from local sellers. The platform is so easy to use and I always find great deals."</p>
+                <p class="testimonial-text">"As a shopper, I love discovering unique products from local sellers. The
+                    platform is so easy to use and I always find great deals."</p>
                 <div class="testimonial-author">
                     <img src="https://randomuser.me/api/portraits/men/45.jpg" alt="Michael T." class="author-img">
                     <div class="author-info">
@@ -765,7 +826,8 @@
                 </div>
             </div>
             <div class="testimonial">
-                <p class="testimonial-text">"The analytics tools provided by ClickNCart help me understand my customers better and optimize my product offerings. Highly recommended for any seller!"</p>
+                <p class="testimonial-text">"The analytics tools provided by ClickNCart help me understand my customers
+                    better and optimize my product offerings. Highly recommended for any seller!"</p>
                 <div class="testimonial-author">
                     <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Priya K." class="author-img">
                     <div class="author-info">
@@ -774,7 +836,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <div class="slider-controls">
                 <div class="slider-dot active" data-slide="0"></div>
                 <div class="slider-dot" data-slide="1"></div>
@@ -786,7 +848,8 @@
     <!-- CTA Section -->
     <section class="cta">
         <h2 class="animate__animated animate__fadeIn">Ready to Join ClickNCart?</h2>
-        <p class="animate__animated animate__fadeIn">Whether you want to start selling or shopping, we've got everything you need to succeed in e-commerce.</p>
+        <p class="animate__animated animate__fadeIn">Whether you want to start selling or shopping, we've got everything
+            you need to succeed in e-commerce.</p>
         <div class="hero-buttons animate__animated animate__fadeInUp">
             <a href="#" class="btn btn-primary">Start Selling</a>
             <a href="#" class="btn btn-secondary">Browse Shops</a>
@@ -798,7 +861,8 @@
         <div class="footer-content">
             <div class="footer-column">
                 <h3>ClickNCart</h3>
-                <p>Your complete e-commerce solution connecting traders with customers in a seamless marketplace experience.</p>
+                <p>Your complete e-commerce solution connecting traders with customers in a seamless marketplace
+                    experience.</p>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
@@ -852,10 +916,10 @@
                 // Remove active class from all buttons and contents
                 tabBtns.forEach(btn => btn.classList.remove('active'));
                 tabContents.forEach(content => content.classList.remove('active'));
-                
+
                 // Add active class to clicked button
                 btn.classList.add('active');
-                
+
                 // Show corresponding content
                 const tabId = btn.getAttribute('data-tab') + '-tab';
                 document.getElementById(tabId).classList.add('active');
@@ -870,7 +934,7 @@
         function showSlide(index) {
             testimonials.forEach(testimonial => testimonial.classList.remove('active'));
             dots.forEach(dot => dot.classList.remove('active'));
-            
+
             testimonials[index].classList.add('active');
             dots[index].classList.add('active');
             currentSlide = index;
@@ -895,7 +959,7 @@
             animateElements.forEach(element => {
                 const elementTop = element.getBoundingClientRect().top;
                 const windowHeight = window.innerHeight;
-                
+
                 if (elementTop < windowHeight - 100) {
                     const animationClass = element.classList[1];
                     element.classList.add(animationClass);
@@ -905,9 +969,59 @@
 
         // Initial check
         checkScroll();
-        
+
         // Check on scroll
         window.addEventListener('scroll', checkScroll);
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('user');
+            let user = null;
+
+            try {
+                user = userStr ? JSON.parse(userStr) : null;
+            } catch (e) {
+                console.error('Failed to parse user from localStorage', e);
+            }
+
+            const guestLinks = document.getElementById('guestLinks');
+            const userLinks = document.getElementById('userLinks');
+            const userNameEl = document.getElementById('userName');
+            const dropdown = document.getElementById('userDropdown');
+
+            if (user && user.name) {
+                // show user menu
+                guestLinks.classList.add('hidden');
+                userLinks.classList.remove('hidden');
+                userNameEl.textContent = `Welcome,  ${user.name}`;
+
+                // toggle dropdown on click
+                document.getElementById('userBtn').addEventListener('click', () => {
+                    dropdown.classList.toggle('hidden');
+                });
+
+                // logout
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                });
+
+                // click outside to close
+                document.addEventListener('click', e => {
+                    if (!userLinks.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+            } else {
+                // no user → show guest, hide menu
+                guestLinks.classList.remove('hidden');
+                userLinks.classList.add('hidden');
+            }
+        });
+    </script>
+
 </body>
+
 </html>

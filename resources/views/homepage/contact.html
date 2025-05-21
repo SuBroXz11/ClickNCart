@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Us - ClickNCart</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @font-face {
             font-family: 'Mosvita';
@@ -118,6 +120,13 @@
         .btn-outline {
             border: 2px solid var(--primary);
             color: var(--primary);
+             text-decoration: none;
+
+            /* ← add these */
+            padding: 10px 20px;
+            border-radius: 40px;
+
+            transition: all 0.3s;
         }
 
         .btn-outline:hover {
@@ -129,6 +138,13 @@
             background: var(--primary);
             color: white;
             border: 2px solid var(--primary);
+            text-decoration: none;
+
+            /* ← add these */
+            padding: 10px 20px;
+            border-radius: 40px;
+
+            transition: all 0.3s;
         }
 
         .btn-primary:hover {
@@ -207,7 +223,8 @@
             color: var(--dark);
         }
 
-        .contact-details p, .contact-details a {
+        .contact-details p,
+        .contact-details a {
             color: #666;
             text-decoration: none;
             transition: color 0.3s;
@@ -475,8 +492,13 @@
 
         /* Animations */
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* Responsive */
@@ -509,6 +531,7 @@
         }
     </style>
 </head>
+
 <body>
     <!-- Header -->
     <header>
@@ -519,12 +542,29 @@
             </div>
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
-                 <li><a href="/products">Products</a></li>
-                <li><a href="/login" class="active">Contact</a></li>
+                <li><a href="/products">Product</a></li>
+                <li><a href="/contact">Contact</a></li>
             </ul>
-            <div class="auth-buttons">
-                <a href="#" class="btn btn-outline">Login</a>
-                <a href="#" class="btn btn-primary">Sign Up</a>
+            <div id="navAuth" class="flex items-center space-x-4">
+                <!-- Guest links -->
+                <div id="guestLinks" class="flex space-x-4">
+                    <a href="/login" class="btn btn-outline">Login</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
+                </div>
+                <!-- User dropdown (hidden by default) -->
+                <div id="userLinks" class="relative hidden">
+                    <button id="userBtn" class="flex items-center space-x-1 px-4 py-2 rounded hover:bg-gray-100 transition">
+                        <span id="userName" class="font-medium"></span>
+                        <i class="fas fa-chevron-down text-gray-600"></i>
+                    </button>
+                    <div id="userDropdown"
+                        class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg hidden">
+                        <a href="/user-profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <button id="logoutBtn" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            Logout
+                        </button>
+                    </div>
+                </div>
             </div>
         </nav>
     </header>
@@ -540,7 +580,7 @@
         <div class="contact-container">
             <div class="contact-info animate__animated animate__fadeInLeft">
                 <h2>Contact Information</h2>
-                
+
                 <div class="contact-method">
                     <div class="contact-icon">
                         <i class="fas fa-map-marker-alt"></i>
@@ -550,7 +590,7 @@
                         <p>123 E-commerce Street, Digital City, DC 10001</p>
                     </div>
                 </div>
-                
+
                 <div class="contact-method">
                     <div class="contact-icon">
                         <i class="fas fa-phone-alt"></i>
@@ -561,7 +601,7 @@
                         <a href="tel:+18005551234">+1 (800) 555-1234</a>
                     </div>
                 </div>
-                
+
                 <div class="contact-method">
                     <div class="contact-icon">
                         <i class="fas fa-envelope"></i>
@@ -572,7 +612,7 @@
                         <a href="mailto:info@clickncart.com">info@clickncart.com</a>
                     </div>
                 </div>
-                
+
                 <div class="contact-method">
                     <div class="contact-icon">
                         <i class="fas fa-headset"></i>
@@ -583,7 +623,7 @@
                         <a href="mailto:sellers@clickncart.com">sellers@clickncart.com</a>
                     </div>
                 </div>
-                
+
                 <h3 style="margin-top: 2rem;">Follow Us</h3>
                 <div class="social-contact">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
@@ -592,7 +632,7 @@
                     <a href="#"><i class="fab fa-linkedin-in"></i></a>
                 </div>
             </div>
-            
+
             <div class="contact-form animate__animated animate__fadeInRight">
                 <h2>Send Us a Message</h2>
                 <form id="contactForm">
@@ -600,12 +640,12 @@
                         <label for="name">Your Name</label>
                         <input type="text" id="name" class="form-control" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="email">Email Address</label>
                         <input type="email" id="email" class="form-control" required>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="subject">Subject</label>
                         <select id="subject" class="form-control" required>
@@ -617,12 +657,12 @@
                             <option value="other">Other</option>
                         </select>
                     </div>
-                    
+
                     <div class="form-group">
                         <label for="message">Your Message</label>
                         <textarea id="message" class="form-control" required></textarea>
                     </div>
-                    
+
                     <button type="submit" class="submit-btn">Send Message</button>
                 </form>
             </div>
@@ -632,7 +672,9 @@
     <!-- Map Section -->
     <section class="map-section animate__animated animate__fadeIn">
         <div class="map-container">
-            <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215256018464!2d-73.98784492452597!3d40.74844097138953!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1689876543210!5m2!1sen!2sus" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3022.215256018464!2d-73.98784492452597!3d40.74844097138953!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x89c259a9b3117469%3A0xd134e199a405a163!2sEmpire%20State%20Building!5e0!3m2!1sen!2sus!4v1689876543210!5m2!1sen!2sus"
+                allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
     </section>
 
@@ -642,7 +684,7 @@
             <h2>Frequently Asked Questions</h2>
             <p>Find quick answers to common questions about ClickNCart</p>
         </div>
-        
+
         <div class="faq-container">
             <div class="faq-item animate__animated animate__fadeInUp" style="animation-delay: 0.1s;">
                 <div class="faq-question">
@@ -650,47 +692,58 @@
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    <p>Creating a seller account is simple! Click on the "Start Selling" button at the top of the page, fill out the registration form with your business details, and verify your email address. Once approved, you can set up your shop and start listing products.</p>
+                    <p>Creating a seller account is simple! Click on the "Start Selling" button at the top of the page,
+                        fill out the registration form with your business details, and verify your email address. Once
+                        approved, you can set up your shop and start listing products.</p>
                 </div>
             </div>
-            
+
             <div class="faq-item animate__animated animate__fadeInUp" style="animation-delay: 0.2s;">
                 <div class="faq-question">
                     <h3>What fees does ClickNCart charge sellers?</h3>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    <p>ClickNCart offers competitive pricing with a small commission on each sale. We have different plans available: Basic (5% commission), Plus (3.5% commission with additional features), and Pro (2.5% commission with all features included). There are no setup fees or monthly charges for the Basic plan.</p>
+                    <p>ClickNCart offers competitive pricing with a small commission on each sale. We have different
+                        plans available: Basic (5% commission), Plus (3.5% commission with additional features), and Pro
+                        (2.5% commission with all features included). There are no setup fees or monthly charges for the
+                        Basic plan.</p>
                 </div>
             </div>
-            
+
             <div class="faq-item animate__animated animate__fadeInUp" style="animation-delay: 0.3s;">
                 <div class="faq-question">
                     <h3>How can buyers contact sellers?</h3>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    <p>Each product page has a "Contact Seller" button that allows buyers to send messages directly to the seller. All communication goes through our secure messaging system to protect both parties' privacy.</p>
+                    <p>Each product page has a "Contact Seller" button that allows buyers to send messages directly to
+                        the seller. All communication goes through our secure messaging system to protect both parties'
+                        privacy.</p>
                 </div>
             </div>
-            
+
             <div class="faq-item animate__animated animate__fadeInUp" style="animation-delay: 0.4s;">
                 <div class="faq-question">
                     <h3>What payment methods does ClickNCart accept?</h3>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    <p>We accept all major credit cards (Visa, MasterCard, American Express), PayPal, Apple Pay, Google Pay, and bank transfers. Sellers receive payments directly to their registered bank account after order fulfillment.</p>
+                    <p>We accept all major credit cards (Visa, MasterCard, American Express), PayPal, Apple Pay, Google
+                        Pay, and bank transfers. Sellers receive payments directly to their registered bank account
+                        after order fulfillment.</p>
                 </div>
             </div>
-            
+
             <div class="faq-item animate__animated animate__fadeInUp" style="animation-delay: 0.5s;">
                 <div class="faq-question">
                     <h3>How does ClickNCart handle returns and refunds?</h3>
                     <i class="fas fa-chevron-down"></i>
                 </div>
                 <div class="faq-answer">
-                    <p>Our return policy requires sellers to clearly state their return conditions on each product page. ClickNCart mediates in case of disputes and ensures fair resolution for both parties. Buyers can initiate returns through their order history page within the specified timeframe.</p>
+                    <p>Our return policy requires sellers to clearly state their return conditions on each product page.
+                        ClickNCart mediates in case of disputes and ensures fair resolution for both parties. Buyers can
+                        initiate returns through their order history page within the specified timeframe.</p>
                 </div>
             </div>
         </div>
@@ -701,7 +754,8 @@
         <div class="footer-content">
             <div class="footer-column">
                 <h3>ClickNCart</h3>
-                <p>Your complete e-commerce solution connecting traders with customers in a seamless marketplace experience.</p>
+                <p>Your complete e-commerce solution connecting traders with customers in a seamless marketplace
+                    experience.</p>
                 <div class="social-links">
                     <a href="#"><i class="fab fa-facebook-f"></i></a>
                     <a href="#"><i class="fab fa-twitter"></i></a>
@@ -748,10 +802,10 @@
     <script>
         // FAQ Accordion
         const faqItems = document.querySelectorAll('.faq-item');
-        
+
         faqItems.forEach(item => {
             const question = item.querySelector('.faq-question');
-            
+
             question.addEventListener('click', () => {
                 // Close all other items
                 faqItems.forEach(otherItem => {
@@ -759,7 +813,7 @@
                         otherItem.classList.remove('active');
                     }
                 });
-                
+
                 // Toggle current item
                 item.classList.toggle('active');
             });
@@ -767,22 +821,22 @@
 
         // Contact Form Submission
         const contactForm = document.getElementById('contactForm');
-        
+
         contactForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            
+
             // Get form values
             const name = document.getElementById('name').value;
             const email = document.getElementById('email').value;
             const subject = document.getElementById('subject').value;
             const message = document.getElementById('message').value;
-            
+
             // Here you would typically send the data to your server
             console.log('Form submitted:', { name, email, subject, message });
-            
+
             // Show success message
             alert('Thank you for your message! Our team will get back to you soon.');
-            
+
             // Reset form
             contactForm.reset();
         });
@@ -794,7 +848,7 @@
             animateElements.forEach(element => {
                 const elementTop = element.getBoundingClientRect().top;
                 const windowHeight = window.innerHeight;
-                
+
                 if (elementTop < windowHeight - 100) {
                     const animationClass = element.classList[1];
                     element.classList.add(animationClass);
@@ -804,9 +858,58 @@
 
         // Initial check
         checkScroll();
-        
+
         // Check on scroll
         window.addEventListener('scroll', checkScroll);
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const userStr = localStorage.getItem('user');
+            let user = null;
+
+            try {
+                user = userStr ? JSON.parse(userStr) : null;
+            } catch (e) {
+                console.error('Failed to parse user from localStorage', e);
+            }
+
+            const guestLinks = document.getElementById('guestLinks');
+            const userLinks = document.getElementById('userLinks');
+            const userNameEl = document.getElementById('userName');
+            const dropdown = document.getElementById('userDropdown');
+
+            if (user && user.name) {
+                // show user menu
+                guestLinks.classList.add('hidden');
+                userLinks.classList.remove('hidden');
+                userNameEl.textContent = `Welcome,  ${user.name}`;
+
+                // toggle dropdown on click
+                document.getElementById('userBtn').addEventListener('click', () => {
+                    dropdown.classList.toggle('hidden');
+                });
+
+                // logout
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                });
+
+                // click outside to close
+                document.addEventListener('click', e => {
+                    if (!userLinks.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+
+            } else {
+                // no user → show guest, hide menu
+                guestLinks.classList.remove('hidden');
+                userLinks.classList.add('hidden');
+            }
+        });
+    </script>
 </body>
+
 </html>
