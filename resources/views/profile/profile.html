@@ -286,7 +286,9 @@
         }
         Swal.close();
         Swal.fire('Success', 'Profile updated successfully!', 'success');
-        window.location.reload();
+          setTimeout(() => {
+              window.location.reload();
+          }, 1500);
       } catch (error) {
         Swal.close();
         Swal.fire('Error', 'Something went wrong.', 'error');
