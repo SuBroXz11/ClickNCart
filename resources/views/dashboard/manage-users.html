@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Manage Users | ClickNCart Admin</title>
+
+  <!-- DaisyUI CSS (includes Tailwind utilities + components) -->
+  <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+
+  <!-- Tailwind “browser” build for utility classes -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Sidebar web component -->
+  <script src="./navbar.js" defer></script>
+
+  <style>
+    @font-face {
+      font-family: 'Mosvita';
+      src: url('./font/mosvita.otf') format('opentype');
+      font-weight: normal; font-style: normal; font-display: swap;
+    }
+    body {
+      font-family: 'Mosvita', sans-serif;
+      background-color: #f8fafc;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-50">
+  <div id="app" class="min-h-screen flex">
+    <!-- Sidebar -->
+    <custom-navbar></custom-navbar>
+
+    <!-- Main content (ml-64 to offset sidebar) -->
+    <main class="flex-1 ml-64 p-8">
+      <div class="max-w-6xl mx-auto space-y-6">
+        <h1 class="text-2xl font-semibold text-gray-800">Manage Users</h1>
+
+        <!-- Filters Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 flex flex-col md:flex-row md:items-end gap-4">
+          <!-- Status Filter -->
+          <div class="form-control w-full md:w-1/4">
+            <label class="label"><span class="label-text">Status</span></label>
+            <select id="filterStatus" class="select select-bordered w-full">
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="blocked">Blocked</option>
+              <option value="unapproved">Unapproved</option>
+            </select>
+          </div>
+          <!-- Search -->
+          <div class="form-control flex-1">
+            <label class="label"><span class="label-text">Search</span></label>
+            <input id="searchInput" type="text" placeholder="Search name or email…" class="input input-bordered w-full" />
+          </div>
+          <!-- Refresh -->
+          <button id="refreshBtn" class="btn btn-primary h-12 mt-2 md:mt-0">Refresh</button>
+        </div>
+
+        <!-- Table Card -->
+        <div class="bg-white rounded-lg shadow-md p-6 overflow-x-auto">
+          <div id="usersTableContainer">
+            <div class="py-16 text-center text-gray-400 animate-pulse">
+              Loading users…
+            </div>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="flex justify-end space-x-2"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // State
+      let currentPage = 1, lastPage = 1;
+
+      // Elements
+      const tableContainer = document.getElementById('usersTableContainer');
+      const paginationDiv  = document.getElementById('pagination');
+      const filterStatus   = document.getElementById('filterStatus');
+      const searchInput    = document.getElementById('searchInput');
+      const refreshBtn     = document.getElementById('refreshBtn');
+
+      // Bind events
+      filterStatus.addEventListener('change', () => { currentPage = 1; fetchAndRender(); });
+      searchInput.addEventListener('input', debounce(() => { currentPage = 1; fetchAndRender(); }, 300));
+      refreshBtn.addEventListener('click', () => {
+        filterStatus.value  = '';
+        searchInput.value   = '';
+        currentPage         = 1;
+        fetchAndRender();
+      });
+
+      function debounce(fn, delay) {
+        let timer;
+        return (...args) => {
+          clearTimeout(timer);
+          timer = setTimeout(() => fn(...args), delay);
+        };
+      }
+
+      // Build query string (always include role=user)
+      function buildQuery() {
+        const params = ['role=user'];
+        if (filterStatus.value)   params.push(`status=${filterStatus.value}`);
+        if (searchInput.value.trim()) params.push(`q=${encodeURIComponent(searchInput.value.trim())}`);
+        params.push(`page=${currentPage}`);
+        return '?' + params.join('&');
+      }
+
+      // Fetch & render users
+      async function fetchAndRender() {
+        tableContainer.innerHTML = `<div class="py-16 text-center text-gray-400 animate-pulse">Loading users…</div>`;
+        paginationDiv.innerHTML = '';
+
+        const token = localStorage.getItem('auth_token');
+        if (!token) return window.location.href = '/login';
+
+        try {
+          const res = await fetch(`/api/users${buildQuery()}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (!res.ok) throw new Error();
+          const data = await res.json();
+          const users = Array.isArray(data) ? data : (data.data || data.users || []);
+          const meta  = Array.isArray(data) ? null : (data.meta || data);
+          renderTable(users, meta);
+        } catch {
+          tableContainer.innerHTML = `
+            <div class="py-16 text-center text-red-500">
+              Failed to load users.
+            </div>
+          `;
+        }
+      }
+
+      // Render table rows
+      function renderTable(users, meta) {
+        if (!users.length) {
+          tableContainer.innerHTML = `<div class="py-16 text-center text-gray-400">No users found.</div>`;
+          return;
+        }
+
+        tableContainer.innerHTML = `
+          <table class="table w-full">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Status</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${users.map(u => `
+                <tr>
+                  <td>${u.name}</td>
+                  <td>
+                    ${u.email}
+                    ${u.email_verified_at
+                      ? `<span class="badge badge-success ml-2">Verified</span>`
+                      : `<span class="badge badge-warning ml-2">Unverified</span>`}
+                  </td>
+                  <td>
+                    ${u.status === 'active'
+                      ? `<span class="badge badge-accent">Active</span>`
+                      : u.status === 'blocked'
+                        ? `<span class="badge badge-error">Blocked</span>`
+                        : `<span class="badge badge-warning">${u.status}</span>`}
+                  </td>
+                  <td>${new Date(u.created_at).toLocaleDateString()}</td>
+                  <td>${renderActions(u)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+
+        // Pagination (if meta present)
+        if (meta && meta.last_page > 1) {
+          lastPage = meta.last_page;
+          renderPagination(meta.current_page, meta.last_page);
+        }
+      }
+
+      // Render action buttons
+      function renderActions(u) {
+        const buttons = [];
+        if (u.status === 'unapproved') {
+          buttons.push(`<button class="btn btn-sm btn-success mr-2" onclick="action('/api/retailers/${u.id}/approve')">Approve</button>`);
+        }
+        if (u.status === 'active') {
+          buttons.push(`<button class="btn btn-sm btn-error mr-2" onclick="action('/api/users/${u.id}/block')">Block</button>`);
+        }
+        if (u.status === 'blocked') {
+          buttons.push(`<button class="btn btn-sm btn-primary" onclick="action('/api/users/${u.id}/unblock')">Unblock</button>`);
+        }
+        return buttons.join('');
+      }
+
+      // Perform approve/block/unblock
+      window.action = async (endpoint) => {
+        if (!confirm('Confirm action?')) return;
+        const token = localStorage.getItem('auth_token');
+        try {
+          const res = await fetch(endpoint, { method: 'POST', headers: { 'Authorization': `Bearer ${token}` } });
+          if (!res.ok) throw new Error();
+          fetchAndRender();
+        } catch {
+          alert('Action failed.');
+        }
+      };
+
+      // Render pagination buttons
+      function renderPagination(current, last) {
+        let html = '';
+        for (let i = 1; i <= last; i++) {
+          html += `<button onclick="goto(${i})" class="btn btn-sm ${i === current ? 'btn-primary' : 'btn-outline'} mr-2">${i}</button>`;
+        }
+        paginationDiv.innerHTML = html;
+      }
+
+      window.goto = (page) => {
+        currentPage = page;
+        fetchAndRender();
+      };
+
+      // Initial load
+      fetchAndRender();
+    });
+  </script>
+</body>
+</html>

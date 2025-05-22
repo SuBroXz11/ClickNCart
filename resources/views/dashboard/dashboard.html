@@ -1,104 +1,143 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="./navbar.js" defer></script>
-    <style>
-     @font-face {
-            font-family: 'Mosvita';
-            src: url('./font/mosvita.otf') format('opentype');
-            font-weight: normal;
-            font-style: normal;
-            font-display: swap; 
-        }
-        body {
-            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8fafc;
-        }
-    </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dashboard | ClickNCart Admin</title>
+
+<!-- Tailwind + DaisyUI -->
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" />
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Sidebar component -->
+<script src="./navbar.js" defer></script>
+
+<style>
+    @font-face {
+        font-family: 'Mosvita';
+        src: url('./font/mosvita.otf') format('opentype');
+    }
+    body {
+      font-family: 'Mosvita', sans-serif;
+      background-color: #f8fafc;
+    }
+</style>
 </head>
 <body class="bg-gray-100">
-    <div id="app" class="min-h-screen flex">
-        <!-- Vertical Sidebar Navbar -->
-        <custom-navbar></custom-navbar>
-
-        <!-- Main Content -->
-        <main class="flex-1 ml-64 p-8">
-            <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl">
-                <h2 class="text-3xl font-semibold text-gray-800 mb-2">Welcome to the Dashboard</h2>
-                <p class="text-gray-600">You're successfully authenticated to the Dashboard.</p>
-            </div>
-        </main>
+<div id="app" class="min-h-screen flex">
+    <custom-navbar></custom-navbar>
+    <main class="flex-1 ml-64 p-8 space-y-6">
+        <!-- Welcome Card -->
+        <div class="bg-white rounded-lg shadow-md p-8 max-w-4xl mx-auto">
+            <h2 class="text-3xl font-semibold text-gray-800 mb-2">Welcome to the Dashboard</h2>
+            <p class="text-gray-600">You're successfully authenticated to the Dashboard.</p>
+        </div>
+<!-- Charts Grid -->
+<div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
+    <!-- User Roles Pie -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold mb-4">User Roles Distribution</h3>
+        <canvas id="rolesChart" height="200"></canvas>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check for auth token
-            const authToken = localStorage.getItem('auth_token');
-            
-            if (!authToken) {
-                window.location.href = '/';
-                return;
-            }
+    <!-- User Status Bar -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <h3 class="text-xl font-semibold mb-4">User Status Distribution</h3>
+        <canvas id="statusChart" height="200"></canvas>
+    </div>
+</div>
+    </main>
+    </div>
 
-            // Set active nav item
-            function setActiveNavItem(buttonId) {
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                const activeBtn = document.getElementById(buttonId);
-                if (activeBtn) activeBtn.classList.add('active');
-            }
+<script>
+                document.addEventListener('DOMContentLoaded', async () => {
+                    const token = localStorage.getItem('auth_token');
+                    if (!token) return window.location.href = '/';
 
-            // Set up navigation buttons
-            document.getElementById('dashboardBtn')?.addEventListener('click', () => {
-                setActiveNavItem('dashboardBtn');
-                window.location.href = '/dashboard';
+                await Promise.all([
+                    renderRolesChart(token),
+                    renderStatusChart(token)
+                ]);
             });
 
-            document.getElementById('tradersBtn')?.addEventListener('click', () => {
-                setActiveNavItem('tradersBtn');
-                window.location.href = '/traders';
-            });
-
-            document.getElementById('usersBtn')?.addEventListener('click', () => {
-                setActiveNavItem('usersBtn');
-                window.location.href = '/users';
-            });
-
-            // Set up logout button with API call
-            const logoutBtn = document.getElementById('logoutBtn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async function() {
+                // 1) Roles Pie
+                async function renderRolesChart(token) {
                     try {
-                        const response = await fetch('/api/logout', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'Authorization': `Bearer ${localStorage.getItem('auth_token')}`
-                            }
+                        const res = await fetch('/api/users?role=&page=1', {
+                            headers: { 'Authorization': `Bearer ${token}` }
                         });
+                    if (!res.ok) throw new Error();
+                    const users = await res.json();
+                    const counts = users.reduce((acc, u) => {
+                        acc[u.role] = (acc[u.role] || 0) + 1;
+                        return acc;
+                    }, {});
+                    const labels = Object.keys(counts);
+                    const data = Object.values(counts);
 
-                        if (response.ok) {
-                            localStorage.removeItem('auth_token');
-                            window.location.href = '/';
-                        } else {
-                            console.error('Logout failed:', await response.json());
-                            alert('Logout failed. Please try again.');
-                        }
-                    } catch (error) {
-                        console.error('Error during logout:', error);
-                        alert('An error occurred during logout.');
+                    new Chart(document.getElementById('rolesChart'), {
+                        type: 'pie',
+                        data: {
+                            labels, datasets: [{
+                                data, backgroundColor: [
+                                    'rgba(99,102,241,0.7)',   // indigo
+                                    'rgba(16,185,129,0.7)',   // emerald
+                                    'rgba(244,63,94,0.7)',    // rose
+                                    'rgba(234,179,8,0.7)'     // amber (in case extra roles)
+                                ]
+                            }]
+                        },
+                        options: { plugins: { legend: { position: 'bottom' } } }
+                    });
+                } catch (e) {
+                    console.error('Roles chart failed', e);
+                }
+            }
+
+                // 2) Status Bar
+                async function renderStatusChart(token) {
+                    try {
+                    const res = await fetch('/api/users?role=&page=1', {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    if (!res.ok) throw new Error();
+                    const users = await res.json();
+                    const counts = users.reduce((acc, u) => {
+                        acc[u.status] = (acc[u.status] || 0) + 1;
+                        return acc;
+                    }, {});
+                    // Ensure consistent order: active, blocked, pending
+                    const labels = ['active', 'blocked', 'pending'].filter(s => counts[s] !== undefined);
+                    const data = labels.map(s => counts[s]);
+
+                    new Chart(document.getElementById('statusChart'), {
+                        type: 'bar',
+                        data: {
+                            labels,
+                            datasets: [{
+                                label: '# of Users',
+                                data,
+                                backgroundColor: [
+                                    'rgba(16,185,129,0.7)', // emerald = active
+                                    'rgba(244,63,94,0.7)',  // rose = blocked
+                                    'rgba(234,179,8,0.7)'   // amber = pending
+                                ].slice(0, labels.length)
+                            }]
+                        },
+                        options: {
+                            scales: {
+                                y: { beginAtZero: true, ticks: { precision: 0 } }
+                            },
+                            plugins: { legend: { display: false } }
                     }
                 });
+                } catch (e) {
+                    console.error('Status chart failed', e);
             }
-
-            // Set dashboard as active by default
-            setActiveNavItem('dashboardBtn');
-        });
-    </script>
+                }
+          </script>
 </body>
 </html>

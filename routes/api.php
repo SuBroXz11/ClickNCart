@@ -1,6 +1,4 @@
 <?php
-
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AdminController;
@@ -9,6 +7,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\JwtMiddleware;
 use App\Http\Controllers\Api\CartController;
+use App\Http\Controllers\Api\ProfileController;
+use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\OrderManagement;
 use App\Http\Controllers\CollectionSlotController;
 
@@ -63,7 +63,9 @@ Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
     Route::post('/products/{id}/rate', [ProductController::class, 'updateRating']);
 });
 
-Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
+
+
+Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
      Route::post('/cart/add', [CartController::class, 'addToCart']);
      Route::post('/cart/count', [CartController::class, 'cartCount']);
     Route::get('/cart', [CartController::class, 'getCart']);
@@ -105,23 +107,21 @@ Route::prefix('collection-slots')->group(function () {
 
 // Order routes
 Route::prefix('orders')->group(function () {
-    // User routes
-    Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
-        Route::get('/', [OrderManagement::class, 'getUserOrders']);
-        Route::get('/{orderId}', [OrderManagement::class, 'getOrderDetails']);
-        Route::post('/{orderItemId}/cancel', [OrderManagement::class, 'requestCancellation']);
-    });
+    Route::get('/', [OrderManagement::class, 'getUserOrders']);
+    Route::get('/shop', [OrderManagement::class, 'getShopOrders']);
+    Route::get('/{orderId}', [OrderManagement::class, 'getOrderDetails']);
+    Route::post('/{orderItemId}/cancel', [OrderManagement::class, 'requestCancellation']);
+    Route::put('/{orderItemId}/process-cancellation', [OrderManagement::class, 'processCancellation']);
+    Route::put('/{orderItemId}/status', [OrderManagement::class, 'updateOrderStatus']);
+});
 
-    // Retailer routes
-    Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
-        Route::get('/shop/info', [OrderManagement::class, 'getShopOrders']);
-        Route::get('/shop/{shopId}', [OrderManagement::class, 'getOrdersByShop']); // New endpoint
-        Route::put('/{orderItemId}/process-cancellation', [OrderManagement::class, 'processCancellation']);
-        Route::put('/{orderItemId}/status', [OrderManagement::class, 'updateOrderStatus']);
-    });
+Route::middleware('auth:api')->group(function () {
+    Route::get('user', [ProfileController::class, 'show']);
+    Route::put('user', [ProfileController::class, 'update']);
+});
 
-    // Admin routes
-    Route::middleware([JwtMiddleware::class . ':admin'])->group(function () {
-        Route::get('/admin/all', [OrderManagement::class, 'getAllOrders']); // New endpoint
-    });
+Route::prefix('wishlist')->middleware('auth:api')->group(function(){
+    Route::get('/',      [WishlistController::class,'index']);
+    Route::post('add',   [WishlistController::class,'add']);
+    Route::delete('remove/{id}', [WishlistController::class,'remove']);
 });

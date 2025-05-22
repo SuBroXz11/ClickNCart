@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\Storage;
 use App\Models\Product;
 use App\Models\User;
 use App\Models\Shop;
@@ -16,49 +17,62 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
+        // 1) Validate everything, images must be real files
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'description' => 'required|string',
-            'price' => 'required|numeric|min:0',
-            'category' => 'required|string|max:255',
-            'subcategory' => 'required|string|max:255',
-            'brand' => 'required|string|max:255',
-            'stock_quantity' => 'required|integer|min:0',
-            'images' => 'required|array',
-            'images.*' => 'url',
-            'variants' => 'required|array',
-            'variants.*.variant_id' => 'required|string',
-            'variants.*.color' => 'required|string',
-            'variants.*.stock' => 'required|integer|min:0',
-            'specifications.battery_life' => 'sometimes|string',
-            'specifications.connectivity' => 'sometimes|string',
-            'specifications.weight' => 'sometimes|string',
-            'is_featured' => 'sometimes|boolean',
-            'shop_id' => 'required|exists:shops,shop_id',
+            'name'             => 'required|string|max:255',
+            'description'      => 'required|string',
+            'price'            => 'required|numeric|min:0',
+            'category'         => 'required|string|max:255',
+            'subcategory'      => 'required|string|max:255',
+            'brand'            => 'required|string|max:255',
+            'stock_quantity'   => 'required|integer|min:0',
+            'images'           => 'required|array',
+            'images.*'         => 'required|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
+            'variants'         => 'array',
+            'variants.*.variant_id' => 'string',
+            'variants.*.color'      => 'string',
+            'variants.*.stock'      => 'integer|min:0',
+            'specifications.battery_life'  => 'sometimes|string',
+            'specifications.connectivity'  => 'sometimes|string',
+            'specifications.weight'        => 'sometimes|string',
+            'is_featured'      => 'sometimes|boolean',
+            'shop_id'          => 'required|exists:shops,shop_id',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors(),
             ], 422);
         }
 
+        // 2) Pull out validated data, except images
         $productData = $validator->validated();
-        $productData['product_id'] = 'PROD' . Str::random(6);
-        $productData['ratings'] = [
-            'average' => 0,
-            'count' => 0
-        ];
-        $productData['is_active'] = true;
+        unset($productData['images']);
 
+        // 3) Add generated fields
+        $productData['product_id'] = 'PROD' . Str::upper(Str::random(6));
+        $productData['ratings']    = ['average' => 0, 'count' => 0];
+        $productData['is_active']  = true;
+
+        // 4) Process each uploaded image
+        $storedImageUrls = [];
+        foreach ($request->file('images') as $file) {
+            // Save under storage/app/public/products
+            $path = $file->store('products', 'public');
+            // Build a public URL: /storage/products/filename.jpg
+            $storedImageUrls[] = Storage::url($path);
+        }
+        $productData['images'] = $storedImageUrls;
+
+        // 5) Create the product
         $product = Product::create($productData);
 
         return response()->json([
             'success' => true,
             'message' => 'Product created successfully',
-            'data' => $product
+            'data'    => $product,
         ], 201);
     }
 
@@ -76,18 +90,14 @@ class ProductController extends Controller
             ], 404);
         }
 
-        // Check authorization:
-        // - Admin can view any product
-        // - Retailer can view only their own products
-        // - Users can view any active product
-        if ($request->user()->role === User::ROLE_RETAILER && $product->retailer_id !== $request->user()->id) {
+        if ($request->user()->role === User::ROLE_RETAILER
+            && $product->retailer_id !== $request->user()->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Unauthorized to view this product'
             ], 403);
         }
 
-        // For regular users, only show active products
         if ($request->user()->role === User::ROLE_USER && !$product->is_active) {
             return response()->json([
                 'success' => false,
@@ -97,15 +107,15 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $product
+            'data'    => $product
         ]);
     }
 
     public function getProductById($productId)
     {
         $product = Product::where('product_id', $productId)
-                         ->where('is_active', true)
-                         ->first();
+                          ->where('is_active', true)
+                          ->first();
 
         if (!$product) {
             return response()->json([
@@ -116,7 +126,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $product
+            'data'    => $product
         ]);
     }
 
@@ -126,7 +136,6 @@ class ProductController extends Controller
     public function update(Request $request, $id)
     {
         $product = Product::where('product_id', $id)->first();
-
         if (!$product) {
             return response()->json([
                 'success' => false,
@@ -134,43 +143,53 @@ class ProductController extends Controller
             ], 404);
         }
 
-        
-
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|string|max:255',
-            'description' => 'sometimes|string',
-            'price' => 'sometimes|numeric|min:0',
-            'category' => 'sometimes|string|max:255',
-            'subcategory' => 'sometimes|string|max:255',
-            'brand' => 'sometimes|string|max:255',
+            'name'           => 'sometimes|string|max:255',
+            'description'    => 'sometimes|string',
+            'price'          => 'sometimes|numeric|min:0',
+            'category'       => 'sometimes|string|max:255',
+            'subcategory'    => 'sometimes|string|max:255',
+            'brand'          => 'sometimes|string|max:255',
             'stock_quantity' => 'sometimes|integer|min:0',
-            'images' => 'sometimes|array',
-            'images.*' => 'url',
-            'variants' => 'sometimes|array',
+            'images'         => 'sometimes|array',
+            'images.*'       => 'sometimes|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
+            'variants'       => 'sometimes|array',
             'variants.*.variant_id' => 'sometimes|string',
-            'variants.*.color' => 'sometimes|string',
-            'variants.*.stock' => 'sometimes|integer|min:0',
-            'specifications.battery_life' => 'sometimes|string',
-            'specifications.connectivity' => 'sometimes|string',
-            'specifications.weight' => 'sometimes|string',
-            'is_active' => 'sometimes|boolean',
-            'is_featured' => 'sometimes|boolean',
+            'variants.*.color'      => 'sometimes|string',
+            'variants.*.stock'      => 'sometimes|integer|min:0',
+            'specifications.battery_life'  => 'sometimes|string',
+            'specifications.connectivity'  => 'sometimes|string',
+            'specifications.weight'        => 'sometimes|string',
+            'is_active'      => 'sometimes|boolean',
+            'is_featured'    => 'sometimes|boolean',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
-                'errors' => $validator->errors()
+                'errors'  => $validator->errors()
             ], 422);
         }
 
-        $product->update($validator->validated());
+        $updateData = $validator->validated();
+
+        // If new images were uploaded, process them
+        if (isset($updateData['images'])) {
+            $storedImageUrls = [];
+            foreach ($request->file('images') as $file) {
+                $path = $file->store('products', 'public');
+                $storedImageUrls[] = Storage::url($path);
+            }
+            $updateData['images'] = $storedImageUrls;
+        }
+
+        $product->update($updateData);
 
         return response()->json([
             'success' => true,
             'message' => 'Product updated successfully',
-            'data' => $product
+            'data'    => $product
         ]);
     }
 
@@ -180,15 +199,12 @@ class ProductController extends Controller
     public function destroy(Request $request, $id)
     {
         $product = Product::where('product_id', $id)->first();
-
         if (!$product) {
             return response()->json([
                 'success' => false,
                 'message' => 'Product not found'
             ], 404);
         }
-
-        
 
         $product->delete();
 

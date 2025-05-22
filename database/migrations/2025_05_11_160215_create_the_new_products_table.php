@@ -39,11 +39,6 @@ return new class extends Migration
                   ->on('shops')
                   ->onDelete('cascade');
         });
-
-        // Add fulltext index for better search performance
-        Schema::table('products', function (Blueprint $table) {
-            $table->fullText(['name', 'description', 'brand', 'category', 'subcategory']);
-        });
     }
 
     /**
@@ -55,7 +50,6 @@ return new class extends Migration
     {
         Schema::table('products', function (Blueprint $table) {
             $table->dropForeign(['shop_id']);
-            $table->dropFullText(['name', 'description', 'brand', 'category', 'subcategory']);
         });
 
         Schema::dropIfExists('products');

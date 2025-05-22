@@ -894,7 +894,7 @@
         const closeModal = document.querySelector('.close-modal');
 
         // API Configuration
-        const API_BASE_URL = 'http://localhost:8000/api'; // Replace with your actual API URL
+            const API_BASE_URL = '/api'; // Replace with your actual API URL
         let currentPage = 1;
         let totalPages = 1;
         let currentFilters = {
@@ -967,15 +967,19 @@
                 currentPage = 1;
                 loadProducts();
             });
-            
-            // Price range slider
+
             const priceRange = document.getElementById('price-range');
             const minPriceDisplay = document.getElementById('min-price');
             const maxPriceDisplay = document.getElementById('max-price');
-            
+
             priceRange.addEventListener('input', () => {
-                maxPriceDisplay.textContent = `$${priceRange.value}`;
+                console.log('slider moved, value:', priceRange.value);
+                // lowest possible
+                minPriceDisplay.textContent = `NPR ${priceRange.min}`;
+                // current slider value
+                maxPriceDisplay.textContent = `NPR ${priceRange.value}`;
             });
+
             
             // Modal close
             closeModal.addEventListener('click', () => {
@@ -1088,7 +1092,7 @@
             const priceRange = document.getElementById('price-range');
             const maxPriceDisplay = document.getElementById('max-price');
             priceRange.value = priceRange.max;
-            maxPriceDisplay.textContent = `$${priceRange.max}`;
+            maxPriceDisplay.textContent = `${priceRange.max}`;
             
             document.getElementById('min-rating').value = '0';
             sortBySelect.value = 'newest';
@@ -1215,6 +1219,10 @@
                         </div>
                         <div class="product-actions">
                             <button class="btn view-details" data-id="${product.product_id}">View Details</button>
+                            <!-- Wishlist button -->
+  <button class="btn add-to-wishlist" data-id="${product.id}">
+    <i class="fas fa-heart"></i>
+  </button>
                             <button class="btn add-to-cart" data-id="${product.id}">Add to Cart</button>
                         </div>
                     </div>
@@ -1238,6 +1246,13 @@
                     addToCart(productId);
                 });
             });
+            document.querySelectorAll('.add-to-wishlist').forEach(btn => {
+                btn.addEventListener('click', e => {
+                    const id = e.currentTarget.getAttribute('data-id');
+                    addToWishlist(id);
+                });
+            });
+
         }
 
         function renderPagination(meta) {
@@ -1445,6 +1460,33 @@
         showNotification(error.message || 'Failed to add to cart', false);
     }
 }
+
+    async function addToWishlist(productId) {
+        const token = localStorage.getItem('auth_token');
+        if (!token) {
+            showNotification('Login to use your wishlist', false);
+            return;
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/wishlist/add`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ product_id: parseInt(productId) })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.message);
+
+            showNotification(data.message, true);
+        } catch (err) {
+            console.error(err);
+            showNotification(err.message || 'Failed to update wishlist', false);
+        }
+    }
+
 
 function showNotification(message, isSuccess) {
     const notification = document.createElement('div');

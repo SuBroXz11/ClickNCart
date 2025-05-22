@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>My Wishlist | ClickNCart</title>
+
+  <!-- Tailwind CSS + DaisyUI plugin -->
+  <script>
+    // configure DaisyUI as a Tailwind plugin
+    tailwind = window.tailwind || {};
+    tailwind.config = {
+      plugins: [daisyui],
+      daisyui: {
+        themes: ['light','garden'],
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/daisyui@2.51.5/dist/full.js"></script>
+</head>
+<body class="bg-base-200 min-h-screen">
+
+  <header class="bg-white shadow p-4">
+    <div class="container mx-auto">
+      <h1 class="text-2xl font-bold">ClickNCart</h1>
+    </div>
+  </header>
+
+  <main class="container mx-auto px-4 py-8">
+    <h2 class="text-4xl font-bold mb-6">My Wishlist</h2>
+    <div id="wishlist-grid"
+         class="grid gap-6
+                grid-cols-1
+                sm:grid-cols-2
+                md:grid-cols-3
+                lg:grid-cols-4">
+      <!-- products will inject here -->
+    </div>
+  </main>
+
+  <script>
+    const API = '/api/wishlist';
+    const token = localStorage.getItem('auth_token');
+
+    function showNotification(msg, success = true) {
+      const alertDiv = document.createElement('div');
+      alertDiv.className = `alert ${success ? 'alert-success' : 'alert-error'} fixed bottom-4 right-4 shadow-lg`;
+      alertDiv.innerHTML = `<span>${msg}</span>`;
+      document.body.appendChild(alertDiv);
+      setTimeout(() => alertDiv.remove(), 3000);
+    }
+
+    async function loadWishlist() {
+      if (!token) {
+        showNotification('Please log in to view your wishlist', false);
+        return;
+      }
+      try {
+        const res = await fetch(API, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const { success, data, message } = await res.json();
+        if (!success) throw new Error(message || 'Failed to load');
+        const grid = document.getElementById('wishlist-grid');
+        grid.innerHTML = data.map(p => `
+          <div class="card bg-base-100 shadow hover:shadow-lg transition">
+            <figure class="h-40 overflow-hidden">
+              <img src="${p.images[0] || 'https://via.placeholder.com/300'}"
+                   alt="${p.name}"
+                   class="w-full h-full object-cover"/>
+            </figure>
+            <div class="card-body p-4">
+              <h3 class="card-title text-lg">${p.name}</h3>
+              <p class="text-gray-500 text-sm line-clamp-2">${p.description||''}</p>
+              <div class="card-actions justify-end mt-4">
+                <button onclick="removeFromWishlist(${p.id})"
+                        class="btn btn-error btn-sm">
+                  Remove
+                </button>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+        showNotification(err.message, false);
+      }
+    }
+
+    async function removeFromWishlist(id) {
+      try {
+        const res = await fetch(`${API}/remove/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const { success, message } = await res.json();
+        showNotification(message, success);
+        if (success) loadWishlist();
+      } catch (err) {
+        console.error(err);
+        showNotification('Could not remove item', false);
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadWishlist);
+  </script>
+</body>
+</html>
