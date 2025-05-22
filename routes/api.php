@@ -67,7 +67,7 @@ Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
 
 
 
-Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
+Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
      Route::post('/cart/add', [CartController::class, 'addToCart']);
      Route::post('/cart/count', [CartController::class, 'cartCount']);
     Route::get('/cart', [CartController::class, 'getCart']);

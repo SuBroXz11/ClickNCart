@@ -967,15 +967,19 @@
                 currentPage = 1;
                 loadProducts();
             });
-            
-            // Price range slider
+
             const priceRange = document.getElementById('price-range');
             const minPriceDisplay = document.getElementById('min-price');
             const maxPriceDisplay = document.getElementById('max-price');
-            
+
             priceRange.addEventListener('input', () => {
-                maxPriceDisplay.textContent = `$${priceRange.value}`;
+                console.log('slider moved, value:', priceRange.value);
+                // lowest possible
+                minPriceDisplay.textContent = `NPR ${priceRange.min}`;
+                // current slider value
+                maxPriceDisplay.textContent = `NPR ${priceRange.value}`;
             });
+
             
             // Modal close
             closeModal.addEventListener('click', () => {
@@ -1088,7 +1092,7 @@
             const priceRange = document.getElementById('price-range');
             const maxPriceDisplay = document.getElementById('max-price');
             priceRange.value = priceRange.max;
-            maxPriceDisplay.textContent = `$${priceRange.max}`;
+            maxPriceDisplay.textContent = `${priceRange.max}`;
             
             document.getElementById('min-rating').value = '0';
             sortBySelect.value = 'newest';

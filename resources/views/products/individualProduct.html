@@ -629,7 +629,7 @@
 
     <script>
         // Base URL for API
-        const API_BASE_URL = 'http://localhost:8000';
+                        const API_BASE_URL = '';
         
         // DOM Elements
         const notification = document.getElementById('notification');
@@ -911,7 +911,7 @@
                 addToCartBtn.disabled = true;
 
                 // Make API call to add to cart
-                const response = await fetch(`${API_BASE_URL}/cart/add`, {
+                const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
