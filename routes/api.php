@@ -86,8 +86,21 @@ Route::prefix('payment')->group(function () {
     Route::get('/success', [PaymentController::class, 'paymentSuccess']);
 });
 
+// Add these routes inside your existing routes file, within the appropriate middleware groups
+
 Route::prefix('collection-slots')->group(function () {
     Route::post('/check-availability', [CollectionSlotController::class, 'checkAvailability']);
+    
+    // Admin routes
+    Route::middleware([JwtMiddleware::class . ':admin'])->group(function () {
+        Route::get('/', [CollectionSlotController::class, 'getAllSlots']);
+        Route::put('/{slotId}/status', [CollectionSlotController::class, 'updateSlotStatus']);
+    });
+    
+    // User routes
+    Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
+        Route::get('/order/{orderId}', [CollectionSlotController::class, 'getSlotByOrder']);
+    });
 });
 
 // Order routes
