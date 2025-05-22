@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retailer Order Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+     <script src="./navbar.js" defer></script>
+        <link rel="preload" href="./font/mosvita.otf" as="font" type="font/otf" crossorigin>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+          @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+         body {
+               font-family: 'Mosvita', 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f7fa;
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        .order-card {
+            transition: all 0.3s ease;
+        }
+        .order-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-pending {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status-processing {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .status-shipped {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+        .status-delivered {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+        .status-cancelled {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+        .cancellation-pending {
+            background-color: #fff7ed;
+            color: #9a3412;
+        }
+        .cancellation-approved {
+            background-color: #f0fdf4;
+            color: #166534;
+        }
+        .cancellation-rejected {
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+        .tab-active {
+            border-bottom: 3px solid #3b82f6;
+            color: #3b82f6;
+            font-weight: 600;
+        }
+        .modal {
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            transform: translateY(-20px);
+            opacity: 0;
+        }
+        .modal.active {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="container mx-auto px-4 py-8 flex justify-center gap-8">
+        <div>
+        <custom-navbar></custom-navbar>
+        </div>
+        <div>
+        <!-- Header -->
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800">Order Management</h1>
+            <p class="text-gray-600">Manage your shop orders and fulfill customer requests</p>
+        </header>
+
+      
+
+        <!-- Filter and Search -->
+        <div class="bg-white rounded-lg shadow p-6 mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
+                    <button class="tab-btn px-4 py-2 whitespace-nowrap" data-status="">All Orders</button>
+                    <button class="tab-btn px-4 py-2 whitespace-nowrap" data-status="pending">Pending</button>
+                    <button class="tab-btn px-4 py-2 whitespace-nowrap" data-status="processing">Processing</button>
+                    <button class="tab-btn px-4 py-2 whitespace-nowrap" data-status="shipped">Shipped</button>
+                    <button class="tab-btn px-4 py-2 whitespace-nowrap" data-status="delivered">Delivered</button>
+                    <button class="tab-btn px-4 py-2 whitespace-nowrap" data-status="cancelled">Cancelled</button>
+                </div>
+                <div class="relative">
+                    <input type="text" id="search-orders" placeholder="Search orders..." class="pl-10 pr-4 py-2 border rounded-lg w-full md:w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Orders List -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                            <th scope="col" class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="orders-table-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Orders will be loaded here -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="px-6 py-4 flex items-center justify-between border-t border-gray-200">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    <button id="prev-page-mobile" class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Previous</button>
+                    <button id="next-page-mobile" class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">Next</button>
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            <button id="prev-page" class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Previous</span>
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <div id="page-numbers" class="flex">
+                                <!-- Page numbers will be added here -->
+                            </div>
+                            <button id="next-page" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                <span class="sr-only">Next</span>
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="order-details-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="flex justify-between items-start">
+                        <h3 class="text-lg leading-6 font-medium text-gray-900" id="modal-order-id">Order #</h3>
+                        <button id="close-modal" class="text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="mt-4">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Customer Information</h4>
+                                <p id="customer-name" class="text-gray-600"></p>
+                                <p id="customer-email" class="text-gray-600"></p>
+                                <p id="customer-phone" class="text-gray-600"></p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <h4 class="font-medium text-gray-900 mb-2">Shipping Information</h4>
+                                <p id="shipping-address" class="text-gray-600"></p>
+                                <p id="shipping-method" class="text-gray-600 mt-2"></p>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4">
+                            <h4 class="font-medium text-gray-900 mb-4">Order Items</h4>
+                            <div id="order-items-list" class="space-y-4">
+                                <!-- Order items will be loaded here -->
+                            </div>
+                        </div>
+                        
+                        <div class="border-t border-gray-200 pt-4 mt-6">
+                            <div class="flex justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">Order Summary</h4>
+                                    <p class="text-sm text-gray-500">Payment Method: <span id="payment-method"></span></p>
+                                    <p class="text-sm text-gray-500">Payment Status: <span id="payment-status"></span></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-gray-600">Subtotal: <span id="order-subtotal" class="font-medium"></span></p>
+                                    <p class="text-gray-600">Shipping: <span id="order-shipping" class="font-medium"></span></p>
+                                    <p class="text-gray-600">Tax: <span id="order-tax" class="font-medium"></span></p>
+                                    <p class="text-lg font-bold mt-2">Total: <span id="order-total" class="font-medium"></span></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button id="print-order" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        <i class="fas fa-print mr-2"></i> Print Order
+                    </button>
+                    <button id="close-modal-btn" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Status Modal -->
+    <div id="status-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-truck text-blue-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="status-modal-title">Update Order Status</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500">Select the new status for this order item.</p>
+                                <input type="hidden" id="order-item-id">
+                                <div class="mt-4 space-y-2">
+                                    <div class="flex items-center">
+                                        <input id="status-processing" name="status" type="radio" value="processing" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                        <label for="status-processing" class="ml-3 block text-sm font-medium text-gray-700">Processing</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="status-shipped" name="status" type="radio" value="shipped" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                        <label for="status-shipped" class="ml-3 block text-sm font-medium text-gray-700">Shipped</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="status-delivered" name="status" type="radio" value="delivered" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                        <label for="status-delivered" class="ml-3 block text-sm font-medium text-gray-700">Delivered</label>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <input id="status-cancelled" name="status" type="radio" value="cancelled" class="focus:ring-blue-500 h-4 w-4 text-blue-600 border-gray-300">
+                                        <label for="status-cancelled" class="ml-3 block text-sm font-medium text-gray-700">Cancelled</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button id="update-status-btn" type="button" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                        Update Status
+                    </button>
+                    <button id="cancel-status-btn" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Process Cancellation Modal -->
+    <div id="cancellation-modal" class="fixed inset-0 z-50 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <div class="sm:flex sm:items-start">
+                        <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                            <i class="fas fa-exclamation-triangle text-red-600"></i>
+                        </div>
+                        <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                            <h3 class="text-lg leading-6 font-medium text-gray-900" id="cancellation-modal-title">Process Cancellation Request</h3>
+                            <div class="mt-2">
+                                <p class="text-sm text-gray-500" id="cancellation-reason"></p>
+                                <input type="hidden" id="cancellation-item-id">
+                                <div class="mt-4">
+                                    <label for="cancellation-response" class="block text-sm font-medium text-gray-700">Your Response</label>
+                                    <textarea id="cancellation-response" rows="3" class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"></textarea>
+                                </div>
+                                <div class="mt-4 flex space-x-4">
+                                    <button id="approve-cancellation" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500">
+                                        Approve
+                                    </button>
+                                    <button id="reject-cancellation" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500">
+                                        Reject
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button id="close-cancellation-modal" type="button" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentPage = 1;
+        let totalPages = 1;
+        let currentStatusFilter = '';
+        let currentSearchQuery = '';
+        let authToken = localStorage.getItem('auth_token');
+        
+        // DOM elements
+        const ordersTableBody = document.getElementById('orders-table-body');
+        const prevPageBtn = document.getElementById('prev-page');
+        const nextPageBtn = document.getElementById('next-page');
+        const prevPageMobileBtn = document.getElementById('prev-page-mobile');
+        const nextPageMobileBtn = document.getElementById('next-page-mobile');
+        const pageNumbersContainer = document.getElementById('page-numbers');
+        const paginationInfo = document.getElementById('pagination-info');
+        const searchInput = document.getElementById('search-orders');
+        const tabButtons = document.querySelectorAll('.tab-btn');
+        
+       
+        
+        // Modal elements
+        const orderDetailsModal = document.getElementById('order-details-modal');
+        const closeModalBtn = document.getElementById('close-modal-btn');
+        const closeModal = document.getElementById('close-modal');
+        const printOrderBtn = document.getElementById('print-order');
+        
+        // Status modal elements
+        const statusModal = document.getElementById('status-modal');
+        const updateStatusBtn = document.getElementById('update-status-btn');
+        const cancelStatusBtn = document.getElementById('cancel-status-btn');
+        
+        // Cancellation modal elements
+        const cancellationModal = document.getElementById('cancellation-modal');
+        const closeCancellationModal = document.getElementById('close-cancellation-modal');
+        const approveCancellationBtn = document.getElementById('approve-cancellation');
+        const rejectCancellationBtn = document.getElementById('reject-cancellation');
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+            
+            loadOrders();
+            
+            // Event listeners
+            prevPageBtn.addEventListener('click', goToPreviousPage);
+            nextPageBtn.addEventListener('click', goToNextPage);
+            prevPageMobileBtn.addEventListener('click', goToPreviousPage);
+            nextPageMobileBtn.addEventListener('click', goToNextPage);
+            
+            searchInput.addEventListener('input', function() {
+                currentSearchQuery = this.value;
+                currentPage = 1;
+                loadOrders();
+            });
+            
+            tabButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    tabButtons.forEach(btn => btn.classList.remove('tab-active'));
+                    this.classList.add('tab-active');
+                    currentStatusFilter = this.dataset.status;
+                    currentPage = 1;
+                    loadOrders();
+                });
+            });
+            
+            // Modal event listeners
+            closeModalBtn.addEventListener('click', closeOrderDetailsModal);
+            closeModal.addEventListener('click', closeOrderDetailsModal);
+            printOrderBtn.addEventListener('click', printOrderDetails);
+            
+            // Status modal event listeners
+            cancelStatusBtn.addEventListener('click', closeStatusModal);
+            updateStatusBtn.addEventListener('click', updateOrderStatus);
+            
+            // Cancellation modal event listeners
+            closeCancellationModal.addEventListener('click', closeCancellationModalFn);
+            approveCancellationBtn.addEventListener('click', () => processCancellation('approved'));
+            rejectCancellationBtn.addEventListener('click', () => processCancellation('rejected'));
+        });
+        
+        // Load orders from API
+        function loadOrders() {
+            let url = `/api/orders/shop/info?page=${currentPage}`;
+            
+            if (currentStatusFilter) {
+                url += `&status=${currentStatusFilter}`;
+            }
+            
+            if (currentSearchQuery) {
+                url += `&search=${encodeURIComponent(currentSearchQuery)}`;
+            }
+            
+            fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    renderOrders(data.data);
+                    updatePagination(data);
+                } else {
+                    showError(data.message || 'Failed to load orders');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading orders:', error);
+                showError('Failed to load orders. Please try again.');
+            });
+        }
+        
+        // Load order statistics
+      
+        // Render orders in the table
+        function renderOrders(orders) {
+            ordersTableBody.innerHTML = '';
+            
+            if (orders.data.length === 0) {
+                ordersTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                            No orders found
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            orders.data.forEach(order => {
+                const orderDate = new Date(order.created_at).toLocaleDateString();
+                const statusClass = getStatusClass(order.status);
+                
+                const row = document.createElement('tr');
+                row.className = 'hover:bg-gray-50 order-card';
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        #${order.order_id}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${order.order.user.name}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${order.quantity} item${order.quantity > 1 ? 's' : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        $${order.total.toFixed(2)}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="${statusClass} status-badge">${order.status}</span>
+                        ${order.cancel_requested === 'pending' ? '<span class="cancellation-pending status-badge ml-1">Cancellation Requested</span>' : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        ${orderDate}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button class="text-blue-600 hover:text-blue-900 mr-3 view-details-btn" data-id="${order.order_item_id}">View</button>
+                        ${order.cancel_requested === 'pending' ? 
+                            `<button class="text-purple-600 hover:text-purple-900 process-cancellation-btn" data-id="${order.order_item_id}" data-reason="${order.cancel_reason || ''}">Process</button>` : 
+                            `<button class="text-green-600 hover:text-green-900 update-status-btn" data-id="${order.order_item_id}" data-status="${order.status}">Update</button>`
+                        }
+                    </td>
+                `;
+                
+                ordersTableBody.appendChild(row);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-details-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderItemId = this.dataset.id;
+                    showOrderDetails(orderItemId);
+                });
+            });
+            
+            document.querySelectorAll('.update-status-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderItemId = this.dataset.id;
+                    const currentStatus = this.dataset.status;
+                    showStatusModal(orderItemId, currentStatus);
+                });
+            });
+            
+            document.querySelectorAll('.process-cancellation-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const orderItemId = this.dataset.id;
+                    const reason = this.dataset.reason;
+                    showCancellationModal(orderItemId, reason);
+                });
+            });
+        }
+        
+        // Update pagination controls
+        function updatePagination(data) {
+            totalPages = data.last_page;
+            currentPage = data.current_page;
+            
+            // Update pagination info
+            const from = ((currentPage - 1) * data.per_page) + 1;
+            const to = Math.min(currentPage * data.per_page, data.total);
+         
+            
+            // Update pagination buttons
+            prevPageBtn.disabled = currentPage === 1;
+            nextPageBtn.disabled = currentPage === totalPages;
+            prevPageMobileBtn.disabled = currentPage === 1;
+            nextPageMobileBtn.disabled = currentPage === totalPages;
+            
+            // Update page numbers
+            pageNumbersContainer.innerHTML = '';
+            
+            const maxVisiblePages = 5;
+            let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+            
+            if (endPage - startPage + 1 < maxVisiblePages) {
+                startPage = Math.max(1, endPage - maxVisiblePages + 1);
+            }
+            
+            if (startPage > 1) {
+                const firstPageBtn = createPageButton(1);
+                pageNumbersContainer.appendChild(firstPageBtn);
+                
+                if (startPage > 2) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700';
+                    ellipsis.textContent = '...';
+                    pageNumbersContainer.appendChild(ellipsis);
+                }
+            }
+            
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = createPageButton(i);
+                if (i === currentPage) {
+                    pageBtn.classList.add('bg-blue-50', 'border-blue-500', 'text-blue-600');
+                    pageBtn.classList.remove('bg-white', 'border-gray-300', 'text-gray-500');
+                }
+                pageNumbersContainer.appendChild(pageBtn);
+            }
+            
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const ellipsis = document.createElement('span');
+                    ellipsis.className = 'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700';
+                    ellipsis.textContent = '...';
+                    pageNumbersContainer.appendChild(ellipsis);
+                }
+                
+                const lastPageBtn = createPageButton(totalPages);
+                pageNumbersContainer.appendChild(lastPageBtn);
+            }
+        }
+        
+        function createPageButton(pageNumber) {
+            const button = document.createElement('button');
+            button.className = 'relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50';
+            button.textContent = pageNumber;
+            button.addEventListener('click', () => {
+                currentPage = pageNumber;
+                loadOrders();
+            });
+            return button;
+        }
+        
+        function goToPreviousPage() {
+            if (currentPage > 1) {
+                currentPage--;
+                loadOrders();
+            }
+        }
+        
+        function goToNextPage() {
+            if (currentPage < totalPages) {
+                currentPage++;
+                loadOrders();
+            }
+        }
+        
+        // Show order details modal
+        function showOrderDetails(orderItemId) {
+            fetch(`/api/orders/${orderItemId}`, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    const order = data.data;
+                    
+                    // Set modal content
+                    document.getElementById('modal-order-id').textContent = `Order #${order.order_id}`;
+                    document.getElementById('customer-name').textContent = order.order.user.name;
+                    document.getElementById('customer-email').textContent = order.order.user.email;
+                    document.getElementById('customer-phone').textContent = order.order.user.phone || 'N/A';
+                    
+                    const shippingAddress = order.order.shipping_address;
+                    document.getElementById('shipping-address').textContent = `
+                        ${shippingAddress.street}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.postal_code}, ${shippingAddress.country}
+                    `;
+                    
+                   document.getElementById('shipping-method').textContent = `Shipping Method: Standard`;
+document.getElementById('payment-method').textContent = order.order.payment_method || 'N/A';
+document.getElementById('payment-status').textContent = order.order.payment_status || 'N/A';
+document.getElementById('order-subtotal').textContent = `$${order.order.subtotal.toFixed(2)}`;
+document.getElementById('order-shipping').textContent = `$${order.order.shipping.toFixed(2)}`;
+document.getElementById('order-tax').textContent = `$${order.order.tax.toFixed(2)}`;
+document.getElementById('order-total').textContent = `$${order.order.total.toFixed(2)}`;
+
+// Render order items
+const orderItemsList = document.getElementById('order-items-list');
+orderItemsList.innerHTML = '';
+
+const itemDiv = document.createElement('div');
+itemDiv.className = 'flex items-start border-b border-gray-200 pb-4';
+itemDiv.innerHTML = `
+    <div class="flex-shrink-0">
+        <img src="${order.product.images[0]?.url || '/placeholder-product.jpg'}" alt="${order.product.name}" class="h-20 w-20 rounded-md object-cover">
+    </div>
+    <div class="ml-4 flex-1">
+        <div class="flex justify-between text-base font-medium text-gray-900">
+            <h3>${order.product.name}</h3>
+            <p class="ml-4">$${order.price.toFixed(2)}</p>
+        </div>
+        <div class="flex justify-between text-sm text-gray-500 mt-1">
+            <p>Qty: ${order.quantity}</p>
+            <p>Total: $${order.total.toFixed(2)}</p>
+        </div>
+        <div class="mt-2">
+            <span class="${getStatusClass(order.status)} status-badge">${order.status}</span>
+            ${order.cancel_requested === 'pending' ? 
+                '<span class="cancellation-pending status-badge ml-1">Cancellation Requested</span>' : 
+                ''
+            }
+        </div>
+    </div>
+`;
+orderItemsList.appendChild(itemDiv);
+
+// Show modal
+orderDetailsModal.classList.remove('hidden');
+orderDetailsModal.classList.add('active');
+}})
+.catch(error => {
+console.error('Error loading order details:', error);
+showError('Failed to load order details. Please try again.');
+});
+}
+
+// Show status modal
+function showStatusModal(orderItemId, currentStatus) {
+document.getElementById('order-item-id').value = orderItemId;
+
+// Set the current status as checked
+document.querySelectorAll('input[name="status"]').forEach(radio => {
+    radio.checked = radio.value === currentStatus;
+});
+
+statusModal.classList.remove('hidden');
+statusModal.classList.add('active');
+}
+
+// Update order status
+function updateOrderStatus() {
+const orderItemId = document.getElementById('order-item-id').value;
+const status = document.querySelector('input[name="status"]:checked').value;
+
+fetch(`/api/orders/${orderItemId}/status`, {
+    method: 'PUT',
+    headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    body: JSON.stringify({ status })
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+})
+.then(data => {
+    if (data.success) {
+        showSuccess('Order status updated successfully');
+        closeStatusModal();
+        loadOrders();
+    } else {
+        showError(data.message || 'Failed to update order status');
+    }
+})
+.catch(error => {
+    console.error('Error updating order status:', error);
+    showError('Failed to update order status. Please try again.');
+});
+}
+
+// Show cancellation modal
+function showCancellationModal(orderItemId, reason) {
+document.getElementById('cancellation-item-id').value = orderItemId;
+document.getElementById('cancellation-reason').textContent = `Customer's reason: ${reason || 'No reason provided'}`;
+document.getElementById('cancellation-response').value = '';
+
+cancellationModal.classList.remove('hidden');
+cancellationModal.classList.add('active');
+}
+
+// Process cancellation
+function processCancellation(action) {
+const orderItemId = document.getElementById('cancellation-item-id').value;
+const response = document.getElementById('cancellation-response').value;
+
+fetch(`/api/orders/${orderItemId}/process-cancellation`, {
+    method: 'PUT',
+    headers: {
+        'Authorization': `Bearer ${authToken}`,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+    },
+    body: JSON.stringify({ 
+        action,
+        reason: response 
+    })
+})
+.then(response => {
+    if (!response.ok) {
+        throw new Error('Network response was not ok');
+    }
+    return response.json();
+})
+.then(data => {
+    if (data.success) {
+        showSuccess(`Cancellation ${action} successfully`);
+        closeCancellationModalFn();
+        loadOrders();
+    } else {
+        showError(data.message || `Failed to ${action} cancellation`);
+    }
+})
+.catch(error => {
+    console.error('Error processing cancellation:', error);
+    showError(`Failed to ${action} cancellation. Please try again.`);
+});
+}
+
+// Close modals
+function closeOrderDetailsModal() {
+orderDetailsModal.classList.remove('active');
+setTimeout(() => {
+    orderDetailsModal.classList.add('hidden');
+}, 300);
+}
+
+function closeStatusModal() {
+statusModal.classList.remove('active');
+setTimeout(() => {
+    statusModal.classList.add('hidden');
+}, 300);
+}
+
+function closeCancellationModalFn() {
+cancellationModal.classList.remove('active');
+setTimeout(() => {
+    cancellationModal.classList.add('hidden');
+}, 300);
+}
+
+// Print order details
+function printOrderDetails() {
+const printContents = document.querySelector('#order-details-modal > div > div').innerHTML;
+const originalContents = document.body.innerHTML;
+
+document.body.innerHTML = printContents;
+window.print();
+document.body.innerHTML = originalContents;
+loadOrders();
+}
+
+// Helper functions
+function getStatusClass(status) {
+switch (status) {
+    case 'pending': return 'status-pending';
+    case 'processing': return 'status-processing';
+    case 'shipped': return 'status-shipped';
+    case 'delivered': return 'status-delivered';
+    case 'cancelled': return 'status-cancelled';
+    default: return 'status-pending';
+}
+}
+
+function showError(message) {
+// Implement your error notification UI here
+console.error(message);
+}
+
+function showSuccess(message) {
+// Implement your success notification UI here
+console.log(message);
+}
+</script>
+</body>
+</html>

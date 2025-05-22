@@ -9,7 +9,8 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Middleware\JwtMiddleware;
 use App\Http\Controllers\Api\CartController;
-use App\Http\Controllers\Api\OrderManagement;
+use App\Http\Controllers\OrderManagement;
+use App\Http\Controllers\CollectionSlotController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -30,7 +31,6 @@ Route::middleware('jwt.auth')->group(function () {
         Route::get('/unapproved-retailers', [AdminController::class, 'getUnapprovedRetailers']);
     });
 });
-
 
 ///Product endpoint ///
 Route::get('/products/category/{category}', [ProductController::class, 'getByCategory']);
@@ -63,8 +63,6 @@ Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
     Route::post('/products/{id}/rate', [ProductController::class, 'updateRating']);
 });
 
-
-
 Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
      Route::post('/cart/add', [CartController::class, 'addToCart']);
      Route::post('/cart/count', [CartController::class, 'cartCount']);
@@ -72,7 +70,6 @@ Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
     Route::delete('/cart/remove', [CartController::class, 'deleteCart']);
     Route::put('/cart/update-quantity', [CartController::class, 'updateCartQuantity']);
 });
-
 
 // Shop routes
 Route::middleware([JwtMiddleware::class .':retailer'])->group(function () {
@@ -89,12 +86,29 @@ Route::prefix('payment')->group(function () {
     Route::get('/success', [PaymentController::class, 'paymentSuccess']);
 });
 
+Route::prefix('collection-slots')->group(function () {
+    Route::post('/check-availability', [CollectionSlotController::class, 'checkAvailability']);
+});
+
 // Order routes
 Route::prefix('orders')->group(function () {
-    Route::get('/', [OrderManagement::class, 'getUserOrders']);
-    Route::get('/shop', [OrderManagement::class, 'getShopOrders']);
-    Route::get('/{orderId}', [OrderManagement::class, 'getOrderDetails']);
-    Route::post('/{orderItemId}/cancel', [OrderManagement::class, 'requestCancellation']);
-    Route::put('/{orderItemId}/process-cancellation', [OrderManagement::class, 'processCancellation']);
-    Route::put('/{orderItemId}/status', [OrderManagement::class, 'updateOrderStatus']);
+    // User routes
+    Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
+        Route::get('/', [OrderManagement::class, 'getUserOrders']);
+        Route::get('/{orderId}', [OrderManagement::class, 'getOrderDetails']);
+        Route::post('/{orderItemId}/cancel', [OrderManagement::class, 'requestCancellation']);
+    });
+
+    // Retailer routes
+    Route::middleware([JwtMiddleware::class . ':retailer'])->group(function () {
+        Route::get('/shop/info', [OrderManagement::class, 'getShopOrders']);
+        Route::get('/shop/{shopId}', [OrderManagement::class, 'getOrdersByShop']); // New endpoint
+        Route::put('/{orderItemId}/process-cancellation', [OrderManagement::class, 'processCancellation']);
+        Route::put('/{orderItemId}/status', [OrderManagement::class, 'updateOrderStatus']);
+    });
+
+    // Admin routes
+    Route::middleware([JwtMiddleware::class . ':admin'])->group(function () {
+        Route::get('/admin/all', [OrderManagement::class, 'getAllOrders']); // New endpoint
+    });
 });

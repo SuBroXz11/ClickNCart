@@ -11,6 +11,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Illuminate\Support\Facades\Log;
+use App\Models\CollectionSlot;
+use Illuminate\Support\Facades\DB;
+
+
 class PaymentController extends Controller
 {
     private $paypalBaseUrl;
@@ -29,160 +33,203 @@ class PaymentController extends Controller
      * Create PayPal payment
      */
     public function createPayment(Request $request)
-    {
-        $user = JWTAuth::parseToken()->authenticate();
-        
-        // Validate request
-        $request->validate([
-            'total' => 'required|numeric|min:0.01',
-            'tax' => 'sometimes|numeric|min:0',
-            'shipping' => 'sometimes|numeric|min:0',
-        ]);
-
-        // Get cart items to include in order
-        $cartItems = Cart::with('product')->where('user_id', $user->id)->get();
-        
-        if ($cartItems->isEmpty()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Your cart is empty'
-            ], 400);
-        }
-
-        // Calculate totals
-        $subtotal = $cartItems->sum(function($item) {
-            return $item->quantity * $item->product->price;
-        });
-        
-        $tax = $request->tax ?? 0;
-        $shipping = $request->shipping ?? 0;
-        $total = $subtotal + $tax + $shipping;
-
-      
-
-        $order = Order::create([
-    'order_id' => 'ORD' . strtoupper(uniqid()),
-    'user_id' => $user->id,
-    'subtotal' => $subtotal, // Make sure this matches your migration
-    'tax' => $tax,
-    'shipping' => $shipping,
-    'total' => $total,
-    'payment_status' => 'pending',
-    'status' => 'pending',
+{
+    $user = JWTAuth::parseToken()->authenticate();
+    
+    // Validate request
+    $request->validate([
+    'total' => 'required|numeric|min:0.01',
+    'tax' => 'sometimes|numeric|min:0',
+    'shipping' => 'sometimes|numeric|min:0',
+    'collection_slot_id' => 'sometimes|string|exists:collection_slots,slot_id',
+    'customer_name' => 'required_if:collection_slot_id,!=,null|sometimes|string|max:255',
+    'customer_phone' => 'required_if:collection_slot_id,!=,null|sometimes|string|max:20',
+    'special_instructions' => 'sometimes|string|max:500',
+    'date' => 'required_if:collection_slot_id,null|sometimes|date',
+    'start_time' => 'required_if:collection_slot_id,null|sometimes|date_format:H:i',
+    'end_time' => 'required_if:collection_slot_id,null|sometimes|date_format:H:i',
 ]);
 
-      
-
-        // Create order items
-        foreach ($cartItems as $item) {
-            OrderItem::create([
-                'order_item_id' => 'ORDITM' . strtoupper(uniqid()),
-                'order_id' => $order->id,
-                'product_id' => $item->product->product_id,
-                'shop_id' => $item->product->shop_id,
-                'product_name' => $item->product->name,
-                'price' => $item->product->price,
-                'quantity' => $item->quantity,
-                'total' => $item->quantity * $item->product->price,
-            ]);
-        }
-
-        // Get PayPal access token
-        $tokenResponse = Http::withOptions([
-    'verify' => false // Disables SSL verification
-])->withBasicAuth($this->clientId, $this->secret)
-  ->asForm()
-  ->post($this->paypalBaseUrl . '/v1/oauth2/token', [
-      'grant_type' => 'client_credentials'
-  ]);
-
-        if (!$tokenResponse->successful()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to authenticate with PayPal'
-            ], 500);
-        }
-
-        $accessToken = $tokenResponse->json()['access_token'];
-
-        // Create PayPal order
-        $paypalResponse = Http::withOptions([
-    'verify' => false
-])->withToken($accessToken)
-            ->withHeaders([
-                'Content-Type' => 'application/json',
-                'Prefer' => 'return=representation'
-            ])
-            ->post($this->paypalBaseUrl . '/v2/checkout/orders', [
-                'intent' => 'CAPTURE',
-                'purchase_units' => [
-                    [
-                        'reference_id' => $order->order_id,
-                        'amount' => [
-                            'currency_code' => 'USD',
-                            'value' => $total,
-                            'breakdown' => [
-                                'item_total' => [
-                                    'currency_code' => 'USD',
-                                    'value' => $subtotal
-                                ],
-                                'tax_total' => [
-                                    'currency_code' => 'USD',
-                                    'value' => $tax
-                                ],
-                                'shipping' => [
-                                    'currency_code' => 'USD',
-                                    'value' => $shipping
-                                ]
-                            ]
-                        ],
-                        'items' => $cartItems->map(function($item) {
-                            return [
-                                'name' => $item->product->name,
-                                'unit_amount' => [
-                                    'currency_code' => 'USD',
-                                    'value' => $item->product->price
-                                ],
-                                'quantity' => $item->quantity,
-                                'sku' => $item->product->product_id
-                            ];
-                        })->toArray()
-                    ]
-                ],
-                'application_context' => [
-                    'brand_name' => config('app.name'),
-                    'return_url' => config('app.frontend_url') . '/payment/success',
-                    'cancel_url' => config('app.frontend_url') . '/payment/cancel',
-                    'user_action' => 'PAY_NOW'
-                ]
-            ]);
-
-        if (!$paypalResponse->successful()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to create PayPal order',
-                'errors' => $paypalResponse->json()
-            ], 500);
-        }
-
-        $paypalOrder = $paypalResponse->json();
-
-        // Update order with PayPal ID
-        $order->update([
-            'transaction_id' => $paypalOrder['id'],
-            'payment_method' => 'paypal'
-        ]);
-
+    // Get cart items
+    $cartItems = Cart::with('product')->where('user_id', $user->id)->get();
+    
+    if ($cartItems->isEmpty()) {
         return response()->json([
-            'success' => true,
-            'message' => 'Payment initiated',
-            'data' => [
-                'order_id' => $order->order_id,
-                'paypal_order_id' => $paypalOrder['id'],
-                'approve_url' => collect($paypalOrder['links'])->firstWhere('rel', 'approve')['href']
-            ]
+            'success' => false,
+            'message' => 'Your cart is empty'
+        ], 400);
+    }
+
+    // Calculate totals
+    $subtotal = $cartItems->sum(function($item) {
+        return $item->quantity * $item->product->price;
+    });
+    
+    $tax = $request->tax ?? 0;
+    $shipping = $request->shipping ?? 0;
+    $total = $subtotal + $tax + $shipping;
+
+    // Handle collection slot
+    $collectionSlotId = $request->collection_slot_id;
+    
+    if (!$collectionSlotId && ($request->date && $request->start_time && $request->end_time)) {
+        // Create a new collection slot
+        $collectionSlot = CollectionSlot::create([
+            'slot_id' => 'SLOT' . strtoupper(uniqid()),
+            'date' => $request->date,
+            'start_time' => $request->start_time,
+            'end_time' => $request->end_time,
+            'customer_name' => $request->customer_name,
+            'customer_phone' => $request->customer_phone,
+            'special_instructions' => $request->special_instructions,
+            'status' => CollectionSlot::STATUS_BOOKED,
+        ]);
+        
+        $collectionSlotId = $collectionSlot->slot_id;
+    }
+
+
+    // Create order
+    $order = Order::create([
+        'order_id' => 'ORD' . strtoupper(uniqid()),
+        'user_id' => $user->id,
+        'subtotal' => $subtotal,
+        'tax' => $tax,
+        'shipping' => $shipping,
+        'total' => $total,
+        'payment_status' => 'pending',
+        'status' => 'pending',
+        'collection_slot_id' => $collectionSlotId ?? null,
+        'shipping_address' => $request->shipping_address,
+        'billing_address'=> $request->billing_address,
+        'notes'=> $request->notes
+        
+    ]);
+
+    // Create order items
+    foreach ($cartItems as $item) {
+        OrderItem::create([
+            'order_item_id' => 'ORDITM' . strtoupper(uniqid()),
+            'order_id' => $order->id,
+            'product_id' => $item->product->product_id,
+            'shop_id' => $item->product->shop_id,
+            'product_name' => $item->product->name,
+            'price' => $item->product->price,
+            'quantity' => $item->quantity,
+            'total' => $item->quantity * $item->product->price,
         ]);
     }
+
+    // Update collection slot if one was selected or created
+    if ($collectionSlotId) {
+        CollectionSlot::where('slot_id', $collectionSlotId)
+            ->update([
+                'order_id' => $order->id,
+                'customer_name' => $request->customer_name,
+                'customer_phone' => $request->customer_phone,
+                'special_instructions' => $request->special_instructions,
+                'status' => CollectionSlot::STATUS_BOOKED,
+            ]);
+    }
+
+    // Rest of your PayPal code remains the same...
+    // Get PayPal access token
+    $tokenResponse = Http::withOptions([
+        'verify' => false // Disables SSL verification
+    ])->withBasicAuth($this->clientId, $this->secret)
+      ->asForm()
+      ->post($this->paypalBaseUrl . '/v1/oauth2/token', [
+          'grant_type' => 'client_credentials'
+      ]);
+
+    if (!$tokenResponse->successful()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to authenticate with PayPal'
+        ], 500);
+    }
+
+    $accessToken = $tokenResponse->json()['access_token'];
+
+    // Create PayPal order
+    $paypalResponse = Http::withOptions([
+        'verify' => false
+    ])->withToken($accessToken)
+        ->withHeaders([
+            'Content-Type' => 'application/json',
+            'Prefer' => 'return=representation'
+        ])
+        ->post($this->paypalBaseUrl . '/v2/checkout/orders', [
+            'intent' => 'CAPTURE',
+            'purchase_units' => [
+                [
+                    'reference_id' => $order->order_id,
+                    'amount' => [
+                        'currency_code' => 'USD',
+                        'value' => $total,
+                        'breakdown' => [
+                            'item_total' => [
+                                'currency_code' => 'USD',
+                                'value' => $subtotal
+                            ],
+                            'tax_total' => [
+                                'currency_code' => 'USD',
+                                'value' => $tax
+                            ],
+                            'shipping' => [
+                                'currency_code' => 'USD',
+                                'value' => $shipping
+                            ]
+                        ]
+                    ],
+                    'items' => $cartItems->map(function($item) {
+                        return [
+                            'name' => $item->product->name,
+                            'unit_amount' => [
+                                'currency_code' => 'USD',
+                                'value' => $item->product->price
+                            ],
+                            'quantity' => $item->quantity,
+                            'sku' => $item->product->product_id
+                        ];
+                    })->toArray()
+                ]
+            ],
+            'application_context' => [
+                'brand_name' => config('app.name'),
+                'return_url' => config('app.frontend_url') . '/payment/success',
+                'cancel_url' => config('app.frontend_url') . '/payment/cancel',
+                'user_action' => 'PAY_NOW'
+            ]
+        ]);
+
+    if (!$paypalResponse->successful()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Failed to create PayPal order',
+            'errors' => $paypalResponse->json()
+        ], 500);
+    }
+
+    $paypalOrder = $paypalResponse->json();
+
+    // Update order with PayPal ID
+    $order->update([
+        'transaction_id' => $paypalOrder['id'],
+        'payment_method' => 'paypal'
+    ]);
+
+    return response()->json([
+        'success' => true,
+        'message' => 'Payment initiated',
+        'data' => [
+            'order_id' => $order->order_id,
+            'paypal_order_id' => $paypalOrder['id'],
+            'approve_url' => collect($paypalOrder['links'])->firstWhere('rel', 'approve')['href'],
+            'collection_slot_id' => $collectionSlotId
+        ]
+    ]);
+}
 
     /**
      * Handle PayPal payment success
@@ -302,22 +349,29 @@ class PaymentController extends Controller
             'error' => env('APP_DEBUG') ? $e->getMessage() : null
         ]);
     }}
-
-
-    /**
-     * Format order response
-     */private function formatOrderResponse($order)
+private function formatOrderResponse($order)
 {
     return [
         'order_id' => $order->order_id,
         'user_id' => $order->user_id,
         'transaction_id' => $order->transaction_id,
-        'subtotal' => $order->subtotal, // Now matches database
+        'subtotal' => $order->subtotal,
         'total' => $order->total,
         'tax' => $order->tax,
         'shipping' => $order->shipping,
         'payment_status' => $order->payment_status,
         'status' => $order->status,
+        'collection_details' => $order->collectionSlot ? [
+            'slot_id' => $order->collectionSlot->slot_id,
+            'date' => $order->collectionSlot->date,
+            'start_time' => $order->collectionSlot->start_time,
+            'end_time' => $order->collectionSlot->end_time,
+            'shop' => $order->collectionSlot->shop->name,
+            'customer_name' => $order->collectionSlot->customer_name,
+            'customer_phone' => $order->collectionSlot->customer_phone,
+            'special_instructions' => $order->collectionSlot->special_instructions,
+            'status' => $order->collectionSlot->status,
+        ] : null,
         'created_at' => $order->created_at,
         'products' => $order->items->map(function($item) {
             return [
@@ -331,4 +385,5 @@ class PaymentController extends Controller
             ];
         })
     ];
-}}
+}
+}

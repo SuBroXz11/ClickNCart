@@ -52,7 +52,9 @@ Route::get('/checkout', function () {
 Route::get('/payment/success', function () {
     return response()->file(resource_path('views/payment/payment-success.html'));
 });
-
+Route::get('/orders', function () {
+    return response()->file(resource_path('views/products/orders.html'));
+});
 Route::get('/payment/cancel', function () {
     return response()->file(resource_path('views/payment/cancel.html'));
 });

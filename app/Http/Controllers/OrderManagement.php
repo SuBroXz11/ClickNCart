@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api;
+namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
@@ -9,6 +9,8 @@ use App\Models\Shop;
 use Illuminate\Http\Request;
 use App\Models\Product;
 use Tymon\JWTAuth\Facades\JWTAuth;
+use Illuminate\Support\Facades\Log;
+
 
 class OrderManagement extends Controller
 {
@@ -20,10 +22,10 @@ class OrderManagement extends Controller
         $user = JWTAuth::parseToken()->authenticate();
         
         $orders = Order::with(['items' => function($query) {
-                $query->with('product');
+                $query->with(['product', 'shop']);
             }])
             ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'desc()')
             ->paginate($request->per_page ?? 10);
 
         return response()->json([
@@ -33,20 +35,62 @@ class OrderManagement extends Controller
     }
 
     /**
-     * Get shop's orders
+     * Get shop's orders for the authenticated retailer
      */
-    public function getShopOrders(Request $request)
-    {
-        $user = JWTAuth::parseToken()->authenticate();
-        
-        if (!$user->isRetailer()) {
+public function getShopOrders(Request $request)
+{
+    $user = JWTAuth::parseToken()->authenticate();
+    
+    // Get all shops belonging to the user
+    $shops = Shop::where('user_id', $user->id)->get();
+    Log::info($shops);
+
+    if ($shops->isEmpty()) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No shops found for this user'
+        ], 404);
+    }
+
+    // Get shop IDs for the whereIn clause
+    $shopIds = $shops->pluck('shop_id');
+    
+    $query = OrderItem::with(['order.user', 'product'])
+        ->whereIn('shop_id', $shopIds);
+
+    // Add status filter if provided
+    if ($request->has('status')) {
+        $query->where('status', $request->status);
+    }
+
+    // Add shop_id filter if provided (to filter orders for a specific shop)
+    if ($request->has('shop_id')) {
+        // Validate that the requested shop_id belongs to the user
+        if (!$shopIds->contains($request->shop_id)) {
             return response()->json([
                 'success' => false,
-                'message' => 'Only retailers can view shop orders'
+                'message' => 'Shop not found or does not belong to you'
             ], 403);
         }
+        $query->where('shop_id', $request->shop_id);
+    }
 
-        $shop = Shop::where('user_id', $user->id)->first();
+    $orders = $query->orderBy('created_at', 'desc')
+        ->paginate($request->per_page ?? 10);
+
+    return response()->json([
+        'success' => true,
+        'data' => $orders
+    ]);
+}
+
+    /**
+     * Get orders by shop ID (for admin or the shop owner)
+     */
+    public function getOrdersByShop(Request $request, $shopId)
+    {
+        $user = JWTAuth::parseToken()->authenticate();
+        $shop = Shop::find($shopId);
         
         if (!$shop) {
             return response()->json([
@@ -55,10 +99,50 @@ class OrderManagement extends Controller
             ], 404);
         }
 
-        $orders = OrderItem::with(['order.user', 'product'])
-            ->where('shop_id', $shop->shop_id)
-            ->orderBy('created_at', 'desc')
+        // Check if user is admin or the shop owner
+        if (!$user->isAdmin() && $user->id != $shop->user_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to view these orders'
+            ], 403);
+        }
+
+        $query = OrderItem::with(['order.user', 'product'])
+            ->where('shop_id', $shopId);
+
+        // Add status filter if provided
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 10);
+
+        return response()->json([
+            'success' => true,
+            'data' => $orders
+        ]);
+    }
+
+    /**
+     * Get all orders (for admin)
+     */
+    public function getAllOrders(Request $request)
+    {
+        $query = Order::with(['items.product', 'user']);
+
+        // Add status filter if provided
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // Add payment status filter if provided
+        if ($request->has('payment_status')) {
+            $query->where('payment_status', $request->payment_status);
+        }
+
+        $orders = $query->orderBy('created_at', 'desc')
+            ->paginate($request->per_page ?? 15);
 
         return response()->json([
             'success' => true,
@@ -72,9 +156,10 @@ class OrderManagement extends Controller
     public function getOrderDetails($orderId)
     {
         $user = JWTAuth::parseToken()->authenticate();
+        Log::info("doing");
         
         $order = Order::with(['items' => function($query) use ($user) {
-                $query->with('product');
+                $query->with(['product', 'shop']);
                 
                 if ($user->isRetailer()) {
                     $shop = Shop::where('user_id', $user->id)->first();

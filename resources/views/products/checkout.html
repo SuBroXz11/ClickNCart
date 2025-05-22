@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Cart - ClickNCart</title>
-        <link rel="preload" href="./font/mosvita.otf" as="font" type="font/otf" crossorigin>
+    <link rel="preload" href="./font/mosvita.otf" as="font" type="font/otf" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
     <style>
@@ -409,6 +409,51 @@
             margin-right: auto;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            z-index: 2000;
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            max-width: 800px;
+            box-shadow: 0 5px 30px rgba(0,0,0,0.3);
+        }
+
+        .slot-card {
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .slot-card:hover {
+            border-color: var(--primary);
+        }
+
+        .slot-card.selected {
+            border-color: var(--primary);
+            background-color: rgba(108, 92, 231, 0.1);
+        }
+
+        .slot-card.unavailable {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background-color: #f5f5f5;
+        }
+
         /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; }
@@ -452,6 +497,11 @@
                 grid-column: 1 / -1;
                 text-align: left;
                 margin-top: 1rem;
+            }
+
+            .modal-content {
+                margin: 10% 5%;
+                width: 90%;
             }
         }
     </style>
@@ -529,7 +579,60 @@
         </div>
     </main>
 
-   <script>
+    <!-- Collection Slot Modal -->
+    <div id="collectionSlotModal" class="modal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                <h2 style="font-size: 1.5rem; color: var(--dark);">Select Collection Slot</h2>
+                <button id="closeModalBtn" style="background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--dark);">&times;</button>
+            </div>
+            
+            <div id="dateSelectionContainer" style="margin-bottom: 2rem;">
+                <label for="dateSelect" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Select Date:</label>
+                <input type="date" id="dateSelect" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;" min="">
+            </div>
+            
+            <div id="slotSelectionContainer" style="display: none;">
+                <h3 style="margin-bottom: 1rem;">Available Time Slots</h3>
+                <div id="availableSlots" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem;">
+                    <!-- Slots will be populated here -->
+                </div>
+            </div>
+            
+            <div id="customerInfoContainer" style="margin-top: 2rem; display: none;">
+                <h3 style="margin-bottom: 1rem;">Collection Information</h3>
+                <div style="margin-bottom: 1rem;">
+                    <label for="customerName" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Your Name:</label>
+                    <input type="text" id="customerName" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="customerPhone" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Phone Number:</label>
+                    <input type="tel" id="customerPhone" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;" required>
+                </div>
+                <div>
+                    <label for="specialInstructions" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Special Instructions (Optional):</label>
+                    <textarea id="specialInstructions" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem; min-height: 100px;"></textarea>
+                </div>
+                 <div style="margin-bottom: 1rem;">
+                    <label for="shoppingAddress" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Shopping Address:</label>
+                    <input type="tel" id="shoppingAddress" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;" required>
+                </div>
+
+                <div style="margin-bottom: 1rem;">
+                    <label for="billingAddress" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Billing Address:</label>
+                    <input type="tel" id="billingAddress" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;" required>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <label for="notes" style="display: block; margin-bottom: 0.5rem; font-weight: 500;">Notes for Trader:</label>
+                    <input type="tel" id="notes" style="width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 5px; font-size: 1rem;" required>
+                </div>
+            </div>
+            
+            <button id="confirmCollectionBtn" style="width: 100%; padding: 1rem; background: var(--primary); color: white; border: none; border-radius: 5px; font-size: 1.1rem; font-weight: 600; margin-top: 1.5rem; cursor: pointer; display: none;">Confirm Collection Details</button>
+        </div>
+    </div>
+
+    <script>
         // Base URL for API
         const base_url = 'http://localhost:8000';
         
@@ -544,6 +647,32 @@
         const taxEl = document.getElementById('tax');
         const orderTotalEl = document.getElementById('orderTotal');
         const checkoutBtn = document.getElementById('checkoutBtn');
+        
+        // Collection Slot Modal Elements
+        const collectionSlotModal = document.getElementById('collectionSlotModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const dateSelect = document.getElementById('dateSelect');
+        const availableSlots = document.getElementById('availableSlots');
+        const customerName = document.getElementById('customerName');
+        const customerPhone = document.getElementById('customerPhone');
+        const shoppingAddress = document.getElementById('shoppingAddress');
+        const billingAddress = document.getElementById('billingAddress');
+        const notes = document.getElementById('notes');
+        const specialInstructions = document.getElementById('specialInstructions');
+        const confirmCollectionBtn = document.getElementById('confirmCollectionBtn');
+        const dateSelectionContainer = document.getElementById('dateSelectionContainer');
+        const slotSelectionContainer = document.getElementById('slotSelectionContainer');
+        const customerInfoContainer = document.getElementById('customerInfoContainer');
+
+        // Hardcoded collection slots
+        const COLLECTION_SLOTS = [
+            { start_time: '10:00', end_time: '13:00' },
+            { start_time: '13:00', end_time: '16:00' },
+            { start_time: '16:00', end_time: '19:00' }
+        ];
+
+        // Allowed days (3=Wednesday, 4=Thursday, 5=Friday)
+        const ALLOWED_DAYS = [3, 4, 5];
 
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -557,7 +686,170 @@
                 cartContainer.style.display = 'block';
                 fetchCartItems(authToken);
             }
+
+            // Set minimum date (24 hours from now)
+            const today = new Date();
+            today.setDate(today.getDate() + 1); // 24 hours from now
+            const minDate = today.toISOString().split('T')[0];
+            dateSelect.min = minDate;
+
+            // Set default date to the next allowed day
+            let defaultDate = new Date();
+            while (!ALLOWED_DAYS.includes(defaultDate.getDay())) {
+                defaultDate.setDate(defaultDate.getDate() + 1);
+            }
+            dateSelect.value = defaultDate.toISOString().split('T')[0];
         });
+
+        // Modal event listeners
+        closeModalBtn.addEventListener('click', () => {
+            collectionSlotModal.style.display = 'none';
+        });
+
+        window.addEventListener('click', (event) => {
+            if (event.target === collectionSlotModal) {
+                collectionSlotModal.style.display = 'none';
+            }
+        });
+
+        dateSelect.addEventListener('change', async (e) => {
+            if (e.target.value) {
+                const selectedDate = new Date(e.target.value);
+                const dayOfWeek = selectedDate.getDay();
+                
+                // Check if selected date is an allowed day
+                if (!ALLOWED_DAYS.includes(dayOfWeek)) {
+                    alert('Collection is only available on Wednesday, Thursday, and Friday');
+                    // Reset to next available day
+                    let nextDate = new Date(selectedDate);
+                    while (!ALLOWED_DAYS.includes(nextDate.getDay())) {
+                        nextDate.setDate(nextDate.getDate() + 1);
+                    }
+                    dateSelect.value = nextDate.toISOString().split('T')[0];
+                    return;
+                }
+                
+                await loadAvailableSlots(e.target.value);
+            }
+        });
+
+        confirmCollectionBtn.addEventListener('click', async () => {
+            const selectedSlot = document.querySelector('.slot-card.selected:not(.unavailable)');
+            if (!selectedSlot) {
+                alert('Please select an available time slot');
+                return;
+            }
+            
+            if (!customerName.value || !customerPhone.value || !billingAddress.value ||shoppingAddress.value || notes.value) {
+                alert('Please fill in all required fields');
+                return;
+            }
+            
+            // Get the selected slot details
+            const slotDetails = {
+                date: dateSelect.value,
+                start_time: selectedSlot.dataset.startTime,
+                end_time: selectedSlot.dataset.endTime,
+                customer_name: customerName.value,
+                customer_phone: customerPhone.value,
+                special_instructions: specialInstructions.value,
+                shipping_address: shoppingAddress.value,
+                billing_address: billingAddress.value,
+                notes: notes.value
+            };
+            
+            // Close modal and proceed with checkout
+            collectionSlotModal.style.display = 'none';
+            await proceedToCheckout(slotDetails);
+        });
+
+        // Load available slots for a given date
+        async function loadAvailableSlots(date) {
+            try {
+                slotSelectionContainer.style.display = 'block';
+                availableSlots.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem;">Loading available slots...</div>';
+                
+                // Show all hardcoded slots initially
+                availableSlots.innerHTML = '';
+                
+                // Check availability for each slot
+                for (const slot of COLLECTION_SLOTS) {
+                    const isAvailable = await checkSlotAvailability(date, slot.start_time, slot.end_time);
+                    
+                    const slotCard = document.createElement('div');
+                    slotCard.className = `slot-card ${isAvailable ? '' : 'unavailable'}`;
+                    slotCard.dataset.startTime = slot.start_time;
+                    slotCard.dataset.endTime = slot.end_time;
+                    slotCard.innerHTML = `
+                        <div>
+                            <div style="font-weight: 600; margin-bottom: 0.5rem;">${formatTime(slot.start_time)} - ${formatTime(slot.end_time)}</div>
+                            <div style="font-size: 0.9rem; color: ${isAvailable ? 'var(--success)' : 'var(--danger)'};">${isAvailable ? 'Available' : 'Fully Booked'}</div>
+                        </div>
+                    `;
+                    
+                    if (isAvailable) {
+                        slotCard.addEventListener('click', () => {
+                            document.querySelectorAll('.slot-card').forEach(card => {
+                                card.classList.remove('selected');
+                            });
+                            slotCard.classList.add('selected');
+                            
+                            // Show customer info and confirm button
+                            customerInfoContainer.style.display = 'block';
+                            confirmCollectionBtn.style.display = 'block';
+                        });
+                    }
+                    
+                    availableSlots.appendChild(slotCard);
+                }
+                
+                customerInfoContainer.style.display = 'none';
+                confirmCollectionBtn.style.display = 'none';
+            } catch (error) {
+                console.error('Error loading slots:', error);
+                availableSlots.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: var(--danger);">Error loading slots. Please try again.</div>';
+            }
+        }
+
+        // Check slot availability with backend
+        async function checkSlotAvailability(date, startTime, endTime) {
+            try {
+                const authToken = localStorage.getItem('auth_token');
+                const response = await fetch(`${base_url}/api/collection-slots/check-availability`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        date: date,
+                        start_time: startTime,
+                        end_time: endTime
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    return data.data.is_available;
+                } else {
+                    console.error('Error checking slot availability:', data.message);
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error checking slot availability:', error);
+                return false;
+            }
+        }
+
+        // Format time to 12-hour format
+        function formatTime(timeString) {
+            const [hours, minutes] = timeString.split(':');
+            const hour = parseInt(hours);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour % 12 || 12;
+            return `${hour12}:${minutes} ${ampm}`;
+        }
 
         // Fetch cart items from API
         async function fetchCartItems(token) {
@@ -601,6 +893,93 @@
                 const cartItemEl = createCartItemElement(item);
                 cartItemsContainer.appendChild(cartItemEl);
             });
+        }
+
+        // Checkout button handler
+        checkoutBtn.addEventListener('click', async () => {
+            const authToken = localStorage.getItem('auth_token');
+            if (!authToken) {
+                window.location.href = '/login';
+                return;
+            }
+
+            // Show collection slot modal
+            collectionSlotModal.style.display = 'block';
+            
+            // Load slots for default date
+            await loadAvailableSlots(dateSelect.value);
+        });
+
+        // Proceed to checkout with collection slot details
+        async function proceedToCheckout(collectionDetails = null) {
+            try {
+                const authToken = localStorage.getItem('auth_token');
+                if (!authToken) {
+                    window.location.href = '/login';
+                    return;
+                }
+
+                // Get cart data to calculate totals
+                const cartResponse = await fetch(`${base_url}/api/cart`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const cartData = await cartResponse.json();
+                
+                if (!cartData.success || cartData.cart_items.length === 0) {
+                    alert('Your cart is empty');
+                    return;
+                }
+
+                const subtotal = cartData.total_price;
+                const tax = subtotal * 0.1; // 10% tax
+                const shipping = 0; // Free shipping for now
+                const total = subtotal + tax + shipping;
+
+                // Prepare payment payload
+                const paymentPayload = {
+                    total: total,
+                    tax: tax,
+                    shipping: shipping
+                };
+
+                // Add collection slot info if provided
+                if (collectionDetails) {
+                    paymentPayload.date = collectionDetails.date;
+                    paymentPayload.start_time = collectionDetails.start_time;
+                    paymentPayload.end_time = collectionDetails.end_time;
+                    paymentPayload.customer_name = collectionDetails.customer_name;
+                    paymentPayload.customer_phone = collectionDetails.customer_phone;
+                    paymentPayload.special_instructions = collectionDetails.special_instructions;
+                }
+
+                // Create payment
+                const paymentResponse = await fetch(`${base_url}/api/payment/create`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${authToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentPayload)
+                });
+
+                const paymentData = await paymentResponse.json();
+
+                if (paymentData.success) {
+                    // Redirect to PayPal for payment
+                    window.location.href = paymentData.data.approve_url;
+                } else {
+                    console.error('Payment error:', paymentData.message);
+                    alert('Failed to initiate payment: ' + paymentData.message);
+                }
+            } catch (error) {
+                console.error('Checkout error:', error);
+                alert('An error occurred during checkout');
+            }
         }
 
         // Create cart item HTML element
@@ -741,10 +1120,9 @@
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        product_id: productId
+                        product_id
                     })
-                });
-                
+                                                    })
                 const data = await response.json();
                 
                 if (data.success) {
@@ -792,69 +1170,6 @@
             taxEl.textContent = 'NPR 0.00';
             orderTotalEl.textContent = 'NPR 0.00';
         }
-
-        // Checkout button handler
-        checkoutBtn.addEventListener('click', async () => {
-            const authToken = localStorage.getItem('auth_token');
-            if (!authToken) {
-                window.location.href = '/login';
-                return;
-            }
-
-            // Show confirmation dialog
-            const confirmed = confirm('Are you sure you want to proceed to checkout?');
-            if (!confirmed) return;
-
-            try {
-                // Calculate totals
-                const response = await fetch(`${base_url}/api/cart`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-                
-                const cartData = await response.json();
-                
-                if (!cartData.success || cartData.cart_items.length === 0) {
-                    alert('Your cart is empty');
-                    return;
-                }
-
-                const subtotal = cartData.total_price;
-                const tax = subtotal * 0.1; // 10% tax
-                const shipping = 0; // Free shipping for now
-                const total = (subtotal + tax + shipping)/137.20;
-
-                // Create payment
-                const paymentResponse = await fetch(`${base_url}/api/payment/create`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        total: total,
-                        tax: tax,
-                        shipping: shipping
-                    })
-                });
-
-                const paymentData = await paymentResponse.json();
-
-                if (paymentData.success) {
-                    // Redirect to PayPal for payment
-                    window.location.href = paymentData.data.approve_url;
-                } else {
-                    console.error('Payment error:', paymentData.message);
-                    alert('Failed to initiate payment: ' + paymentData.message);
-                }
-            } catch (error) {
-                console.error('Checkout error:', error);
-                alert('An error occurred during checkout');
-            }
-        });
     </script>
 </body>
 </html>

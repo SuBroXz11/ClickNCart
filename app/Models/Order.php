@@ -35,6 +35,7 @@ class Order extends Model
         'shipping_address',
         'billing_address',
         'notes',
+        'collection_slot_id',
     ];
 
     protected $casts = [
@@ -55,4 +56,5 @@ class Order extends Model
     {
         return $this->hasMany(OrderItem::class, 'order_id', 'id'); // Changed to use 'id' as foreign key
     }
+
 }
