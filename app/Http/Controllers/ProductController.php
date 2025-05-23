@@ -211,14 +211,26 @@ class ProductController extends Controller
             $updateData['images'] = $storedImageUrls;
         }
 
-        // Handle variants as JSON
+        // Handle variants as array
         if (isset($updateData['variants'])) {
-            $updateData['variants'] = json_encode($updateData['variants']);
+            // Ensure variants is an array
+            if (is_string($updateData['variants'])) {
+                $updateData['variants'] = json_decode($updateData['variants'], true);
+            }
+            // Convert stock values to integers
+            foreach ($updateData['variants'] as &$variant) {
+                if (isset($variant['stock'])) {
+                    $variant['stock'] = (int) $variant['stock'];
+                }
+            }
         }
 
-        // Handle specifications as JSON
+        // Handle specifications as array
         if (isset($updateData['specifications'])) {
-            $updateData['specifications'] = json_encode($updateData['specifications']);
+            // Ensure specifications is an array
+            if (is_string($updateData['specifications'])) {
+                $updateData['specifications'] = json_decode($updateData['specifications'], true);
+            }
         }
 
         // Remove any null values
@@ -231,6 +243,14 @@ class ProductController extends Controller
 
         // Refresh the product to get the updated data
         $product->refresh();
+
+        // Ensure variants and specifications are returned as arrays
+        if ($product->variants && is_string($product->variants)) {
+            $product->variants = json_decode($product->variants, true);
+        }
+        if ($product->specifications && is_string($product->specifications)) {
+            $product->specifications = json_decode($product->specifications, true);
+        }
 
         return response()->json([
             'success' => true,

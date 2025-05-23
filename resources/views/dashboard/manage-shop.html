@@ -353,35 +353,61 @@
 
         function setupEventListeners() {
             // Search functionality
-            productSearch.addEventListener('input', function() {
-                filterProducts(this.value);
-                currentPage = 1;
-                renderProducts();
-                renderPagination();
-            });
+            if (productSearch) {
+                productSearch.addEventListener('input', function() {
+                    filterProducts(this.value);
+                    currentPage = 1;
+                    renderProducts();
+                    renderPagination();
+                });
+            }
             
             // Modal controls
-            addProductBtn.addEventListener('click', openAddProductModal);
-            closeModalBtn.addEventListener('click', closeModal);
-            cancelModalBtn.addEventListener('click', closeModal);
+            if (addProductBtn) {
+                addProductBtn.addEventListener('click', function() {
+                    openAddProductModal();
+                });
+            }
+            
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', closeModal);
+            }
+            
+            if (cancelModalBtn) {
+                cancelModalBtn.addEventListener('click', closeModal);
+            }
             
             // Delete modal controls
-            closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
-            cancelDeleteBtn.addEventListener('click', closeDeleteModal);
-            confirmDeleteBtn.addEventListener('click', confirmDelete);
+            if (closeDeleteModalBtn) {
+                closeDeleteModalBtn.addEventListener('click', closeDeleteModal);
+            }
+            
+            if (cancelDeleteBtn) {
+                cancelDeleteBtn.addEventListener('click', closeDeleteModal);
+            }
+            
+            if (confirmDeleteBtn) {
+                confirmDeleteBtn.addEventListener('click', confirmDelete);
+            }
             
             // Form submission
-            productForm.addEventListener('submit', handleFormSubmit);
+            if (productForm) {
+                productForm.addEventListener('submit', handleFormSubmit);
+            }
             
             // User menu
-            userMenuBtn.addEventListener('click', toggleUserMenu);
+            if (userMenuBtn) {
+                userMenuBtn.addEventListener('click', toggleUserMenu);
+            }
             
             // Logout
-            logoutBtn.addEventListener('click', handleLogout);
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', handleLogout);
+            }
             
             // Close menus when clicking outside
             document.addEventListener('click', function(event) {
-                if (!userMenu.contains(event.target) && !userMenuBtn.contains(event.target)) {
+                if (userMenu && !userMenu.contains(event.target) && !userMenuBtn.contains(event.target)) {
                     userMenu.classList.add('hidden');
                 }
                 if (event.target === productModal) {
@@ -505,7 +531,7 @@
                             </div>
                             ${product.is_discount ? `
                                 <div class="absolute top-2 left-2 bg-red-500 text-white px-2 py-1 rounded-lg text-sm">
-                                    ${product.discount_amount ? `-$${product.discount_amount}` : 'On Sale'}
+                                    ${product.discount_amount ? `-NPR ${product.discount_amount}` : 'On Sale'}
                                 </div>
                             ` : ''}
                         </div>
@@ -513,10 +539,10 @@
                             <h3 class="font-bold text-gray-800 mb-1 truncate">${product.name}</h3>
                             <div class="flex items-center space-x-2 mb-2">
                                 ${discountedPrice ? `
-                                    <p class="text-gray-500 line-through">$${product.price.toFixed(2)}</p>
-                                    <p class="primary-color font-semibold">$${discountedPrice}</p>
+                                    <p class="text-gray-500 line-through">NPR${product.price.toFixed(2)}</p>
+                                    <p class="primary-color font-semibold">NPR${discountedPrice}</p>
                                 ` : `
-                                    <p class="primary-color font-semibold">$${product.price.toFixed(2)}</p>
+                                    <p class="primary-color font-semibold">NPR${product.price.toFixed(2)}</p>
                                 `}
                             </div>
                             <div class="flex items-center mb-2">
@@ -941,14 +967,17 @@
                     throw new Error(errorData.message || 'Failed to save product');
                 }
 
-                // Handle discount separately if it's an edit mode
-                if (isEditMode) {
+                const responseData = await response.json();
+                const newProductId = isEditMode ? productId : responseData.data.product_id;
+
+                // Handle discount for both new and existing products
+                if (isDiscount && discountAmount) {
                     const discountData = {
-                        is_discount: isDiscount,
-                        discount_amount: isDiscount ? discountAmount : null
+                        is_discount: true,
+                        discount_amount: parseFloat(discountAmount)
                     };
 
-                    const discountResponse = await fetch(`/api/products/${productId}/discount`, {
+                    const discountResponse = await fetch(`/api/products/${newProductId}/discount`, {
                         method: 'POST',
                         headers: {
                             'Authorization': `Bearer ${authToken}`,
