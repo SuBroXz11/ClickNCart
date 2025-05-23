@@ -123,9 +123,11 @@ class ShopController extends Controller
             ], 403);
         }
 
-   
+        // Log the incoming request data for debugging
+        Log::info('Update Shop Request Data:', $request->all());
 
-        $validator = Validator::make($request->all(), [
+        // Prepare validation rules - similar to store but all fields are optional
+        $validationRules = [
             'name' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
             'logo' => 'sometimes|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
@@ -133,14 +135,40 @@ class ShopController extends Controller
             'address' => 'sometimes|string',
             'contact_number' => 'sometimes|string',
             'email' => 'sometimes|email',
-            'website' => 'sometimes|url',
-            'social_links' => 'sometimes|array',
-            'social_links.*' => 'url',
+            'website' => 'sometimes|nullable|url',
+            'social_links' => 'sometimes|nullable|json',
             'is_active' => 'sometimes|boolean',
-        ]);
+        ];
+
+        // Handle social_links if it's sent as a JSON string (common with FormData)
+        $requestData = $request->all();
+        if (isset($requestData['social_links']) && is_string($requestData['social_links'])) {
+            try {
+                $decodedSocialLinks = json_decode($requestData['social_links'], true);
+                if (json_last_error() === JSON_ERROR_NONE && is_array($decodedSocialLinks)) {
+                    $requestData['social_links'] = $decodedSocialLinks;
+                    // Update validation rules for decoded array
+                    $validationRules['social_links'] = 'sometimes|nullable|array';
+                    $validationRules['social_links.*'] = 'url';
+                } else {
+                    Log::warning('Invalid JSON in social_links field');
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to parse social_links JSON:', ['error' => $e->getMessage()]);
+            }
+        }
+
+        // Handle boolean fields that might come as strings from FormData
+        if (isset($requestData['is_active'])) {
+            if (is_string($requestData['is_active'])) {
+                $requestData['is_active'] = filter_var($requestData['is_active'], FILTER_VALIDATE_BOOLEAN);
+            }
+        }
+
+        $validator = Validator::make($requestData, $validationRules);
 
         if ($validator->fails()) {
-        
+            Log::error('Validation failed:', $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
@@ -148,9 +176,8 @@ class ShopController extends Controller
             ], 422);
         }
 
+        // Get validated data
         $updateData = $validator->validated();
-
-   
 
         // Handle logo upload
         if ($request->hasFile('logo')) {
@@ -180,12 +207,13 @@ class ShopController extends Controller
             $updateData['banner'] = Storage::url($bannerPath);
         }
 
-        // Remove any null values from updateData
+        // Remove any null values from updateData (but keep false values for booleans)
         $updateData = array_filter($updateData, function($value) {
             return $value !== null;
         });
 
-
+        // Log the final update data
+        Log::info('Final Update Data:', $updateData);
 
         try {
             $shop->update($updateData);
@@ -198,6 +226,10 @@ class ShopController extends Controller
                 'data' => $shop
             ]);
         } catch (\Exception $e) {
+            Log::error('Shop Update Error:', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             
             return response()->json([
                 'success' => false,

@@ -135,14 +135,7 @@
                         </div>
                     </div>
 
-                    <!-- Products Section -->
-                    <div class="mb-6 flex flex-col md:flex-row justify-between items-start md:items-center space-y-4 md:space-y-0">
-                        <h2 class="text-2xl font-bold text-gray-800">Your Products</h2>
-                        <div class="relative w-full md:w-64">
-                            <input type="text" id="productSearch" placeholder="Search products..." class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none primary-focus">
-                            <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
-                        </div>
-                    </div>
+                    
 
                     <!-- Products Grid -->
                     <div id="productsContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -190,7 +183,14 @@
                             </div>
                             <div>
                                 <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Category*</label>
-                                <input type="text" id="category" name="category" required class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none primary-focus">
+                                <select id="category" name="category" required class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none primary-focus">
+                                    <option value="">Select a category</option>
+                                    <option value="butchers">Butchers</option>
+                                    <option value="greengrocer">Greengrocer</option>
+                                    <option value="fishmonger">Fishmonger</option>
+                                    <option value="bakery">Bakery</option>
+                                    <option value="delicatessen">Delicatessen</option>
+                                </select>
                             </div>
                             <div>
                                 <label for="subcategory" class="block text-sm font-medium text-gray-700 mb-1">Subcategory*</label>
@@ -238,13 +238,10 @@
                             <label class="block text-sm font-medium text-gray-700 mb-1">Specifications</label>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label for="battery_life" class="block text-xs font-medium text-gray-500 mb-1">Battery Life</label>
+                                    <label for="battery_life" class="block text-xs font-medium text-gray-500 mb-1">Expiry Days</label>
                                     <input type="text" id="battery_life" name="specifications[battery_life]" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none primary-focus">
                                 </div>
-                                <div>
-                                    <label for="connectivity" class="block text-xs font-medium text-gray-500 mb-1">Connectivity</label>
-                                    <input type="text" id="connectivity" name="specifications[connectivity]" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none primary-focus">
-                                </div>
+                                
                                 <div>
                                     <label for="weight" class="block text-xs font-medium text-gray-500 mb-1">Weight</label>
                                     <input type="text" id="weight" name="specifications[weight]" class="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none primary-focus">
@@ -776,7 +773,11 @@
                 document.getElementById('name').value = product.name;
                 document.getElementById('description').value = product.description;
                 document.getElementById('price').value = product.price;
-                document.getElementById('category').value = product.category;
+                
+                // Update category selection
+                const categorySelect = document.getElementById('category');
+                categorySelect.value = product.category.toLowerCase();
+                
                 document.getElementById('subcategory').value = product.subcategory;
                 document.getElementById('brand').value = product.brand;
                 document.getElementById('stock_quantity').value = product.stock_quantity;
@@ -866,7 +867,6 @@
                 // Set specifications
                 if (product.specifications) {
                     document.getElementById('battery_life').value = product.specifications.battery_life || '';
-                    document.getElementById('connectivity').value = product.specifications.connectivity || '';
                     document.getElementById('weight').value = product.specifications.weight || '';
                 }
                 
@@ -905,7 +905,6 @@
                 
                 // Append specifications
                 formData.append('specifications[battery_life]', document.getElementById('battery_life').value);
-                formData.append('specifications[connectivity]', document.getElementById('connectivity').value);
                 formData.append('specifications[weight]', document.getElementById('weight').value);
                 
                 // Append images
@@ -926,8 +925,8 @@
                 });
                 
                 // Make API request for product
-                const url = isEditMode ? `/api/products/${productId}` : '/api/products';
-                const method = isEditMode ? 'PUT' : 'POST';
+                const url = isEditMode ? `/api/products/${productId}/update` : '/api/products';
+                const method = isEditMode ? 'POST' : 'POST';
                 
                 const response = await fetch(url, {
                     method: method,

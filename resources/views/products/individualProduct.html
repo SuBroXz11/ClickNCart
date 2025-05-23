@@ -564,23 +564,6 @@
                 <h1 id="productName">Product Name</h1>
                 <div class="product-brand" id="productBrand">Brand: <span></span></div>
                 
-                <div class="product-rating">
-                    <div class="stars" id="productStars">
-                        <!-- Stars will be dynamically inserted here -->
-                    </div>
-                    <div class="rating-count" id="ratingCount">(0 reviews)</div>
-                    <div class="rate-product" id="rateProductContainer">
-                        <select id="ratingSelect">
-                            <option value="1">1</option>
-                            <option value="2">2</option>
-                            <option value="3">3</option>
-                            <option value="4">4</option>
-                            <option value="5" selected>5</option>
-                        </select>
-                        <button class="rate-btn" id="rateProductBtn">Rate</button>
-                    </div>
-                </div>
-                
                 <div class="price-container">
                     <span class="current-price" id="productPrice">$0.00</span>
                     <span class="stock-status" id="stockStatus">In Stock</span>
@@ -613,7 +596,6 @@
                     <button class="add-to-cart" id="addToCartBtn" disabled>
                         <i class="fas fa-shopping-cart"></i> Add to Cart
                     </button>
-                    
                 </div>
                 
                 <!-- Specifications -->
@@ -629,7 +611,7 @@
 
     <script>
         // Base URL for API
-                        const API_BASE_URL = '';
+        const API_BASE_URL = '';
         
         // DOM Elements
         const notification = document.getElementById('notification');
@@ -637,11 +619,6 @@
         const signupBtn = document.getElementById('signupBtn');
         const productName = document.getElementById('productName');
         const productBrand = document.getElementById('productBrand');
-        const productStars = document.getElementById('productStars');
-        const ratingCount = document.getElementById('ratingCount');
-        const rateProductContainer = document.getElementById('rateProductContainer');
-        const ratingSelect = document.getElementById('ratingSelect');
-        const rateProductBtn = document.getElementById('rateProductBtn');
         const productPrice = document.getElementById('productPrice');
         const stockStatus = document.getElementById('stockStatus');
         const productDescription = document.getElementById('productDescription');
@@ -658,10 +635,9 @@
         const categoryLink = document.getElementById('categoryLink');
         const productNameBreadcrumb = document.getElementById('productNameBreadcrumb');
 
-        // Get product ID from URL
-          const productId = '<!--PRODUCT_ID-->';
         let selectedVariant = null;
         let productData = null;
+        let id;
 
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', () => {
@@ -672,26 +648,29 @@
             signupBtn.href = '/register';
             
             // Fetch product details
-            fetchProductDetails(productId);
+            fetchProductDetails();
             
             // Enable/disable buttons based on auth
             if (authToken) {
-                rateProductContainer.style.display = 'block';
                 addToCartBtn.disabled = false;
             } else {
-                rateProductContainer.style.display = 'none';
                 addToCartBtn.disabled = true;
             }
         });
 
         // Fetch product details from API
-        async function fetchProductDetails(id) {
+        async function fetchProductDetails() {
             try {
-                const response = await fetch(`${API_BASE_URL}/api/product/id/${id}`);
+                // Get product ID from URL path
+                const pathSegments = window.location.pathname.split('/');
+                const productId = pathSegments[pathSegments.length - 1];
+                
+                const response = await fetch(`${API_BASE_URL}/api/product/id/${productId}`);
                 const data = await response.json();
                 
                 if (data.success) {
                     productData = data.data;
+                    id = data.data.id;
                     displayProductDetails(data.data);
                 } else {
                     throw new Error(data.message || 'Failed to load product details');
@@ -760,25 +739,6 @@
             } else {
                 specificationsSection.style.display = 'none';
             }
-        }
-
-        // Update rating display
-        function updateRatingDisplay(ratings) {
-            // Clear existing stars
-            productStars.innerHTML = '';
-            
-            const averageRating = ratings.average || 0;
-            const ratingCountValue = ratings.count || 0;
-            
-            // Add full stars
-            for (let i = 1; i <= 5; i++) {
-                const star = document.createElement('i');
-                star.className = i <= averageRating ? 'fas fa-star' : 'far fa-star';
-                productStars.appendChild(star);
-            }
-            
-            // Update rating count text
-            ratingCount.textContent = `(${ratingCountValue} review${ratingCountValue !== 1 ? 's' : ''})`;
         }
 
         // Display product images
@@ -921,16 +881,17 @@
                 return;
             }
 
+            if (!productData || !productData.product_id) {
+                showNotification('Product information is not available', false);
+                return;
+            }
+
             try {
                 // Show loading state
                 addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
                 addToCartBtn.disabled = true;
 
-                // Get product ID from the URL path
-                const pathSegments = window.location.pathname.split('/');
-                const productIdFromPath = pathSegments[pathSegments.length - 1];
-
-                // Make API call to add to cart
+                // Make API call to add to cart using product_id from API response
                 const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
                     method: 'POST',
                     headers: {
@@ -938,7 +899,7 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        product_id: productIdFromPath,
+                        product_id: productData.id,
                         quantity: parseInt(quantityInput.value)
                     })
                 });
@@ -962,57 +923,6 @@
                 // Reset button state
                 addToCartBtn.innerHTML = '<i class="fas fa-shopping-cart"></i> Add to Cart';
                 addToCartBtn.disabled = false;
-            }
-        });
-
-        // Rate product
-        rateProductBtn.addEventListener('click', async () => {
-            const token = localStorage.getItem('auth_token');
-            
-            if (!token) {
-                showNotification('Please login to rate products', false);
-                return;
-            }
-
-            try {
-                // Show loading state
-                rateProductBtn.textContent = 'Rating...';
-                rateProductBtn.disabled = true;
-
-                // Make API call to rate product
-                const response = await fetch(`${API_BASE_URL}/api/products/${productId}/rate`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: JSON.stringify({
-                        rating: parseInt(ratingSelect.value)
-                    })
-                });
-
-                const data = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(data.message || 'Failed to rate product');
-                }
-
-                if (data.success) {
-                    // Show success notification
-                    showNotification(data.message || 'Product rated successfully', true);
-                    
-                    // Update rating display
-                    updateRatingDisplay(data.data.ratings);
-                } else {
-                    throw new Error(data.message || 'Failed to rate product');
-                }
-            } catch (error) {
-                console.error('Error rating product:', error);
-                showNotification(error.message || 'Failed to rate product', false);
-            } finally {
-                // Reset button state
-                rateProductBtn.textContent = 'Rate';
-                rateProductBtn.disabled = false;
             }
         });
 

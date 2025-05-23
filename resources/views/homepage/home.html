@@ -62,14 +62,12 @@
         .logo {
             display: flex;
             align-items: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--primary);
         }
 
-        .logo i {
-            margin-right: 10px;
-            color: var(--secondary);
+        .logo img {
+            height: 64px;
+            width: auto;
+            object-fit: contain;
         }
 
         .nav-links {
@@ -635,12 +633,22 @@
     <header>
         <nav class="navbar">
             <div class="logo">
-                <i class="fas fa-shopping-cart"></i>
-                <span>ClickNCart</span>
+                <a href="/">
+                    <img src="/logo/logo.jpg" alt="ClickNCart Logo" class="h-16 w-auto">
+                </a>
             </div>
             <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/products">Product</a></li>
+                
+                <li><a href="/products">Products</a></li>
+                <li id="userNavLinks" class="hidden">
+                    <a href="/user-orders">Orders</a>
+                </li>
+                <li id="userNavLinks2" class="hidden">
+                    <a href="/checkout">Checkout</a>
+                </li>
+                <li id="userNavLinks3" class="hidden">
+                    <a href="/cart">Cart</a>
+                </li>
                 <li><a href="/contact">Contact</a></li>
             </ul>
             <div id="navAuth" class="flex items-center space-x-4">
@@ -976,6 +984,7 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const userStr = localStorage.getItem('user');
+            const authToken = localStorage.getItem('auth_token');
             let user = null;
 
             try {
@@ -988,36 +997,48 @@
             const userLinks = document.getElementById('userLinks');
             const userNameEl = document.getElementById('userName');
             const dropdown = document.getElementById('userDropdown');
+            
+            // Get user navigation links
+            const userNavLinks = document.getElementById('userNavLinks');
+            const userNavLinks2 = document.getElementById('userNavLinks2');
+            const userNavLinks3 = document.getElementById('userNavLinks3');
 
-            if (user && user.name) {
-                // show user menu
+            if (authToken && user && user.role === 'user') {
+                // Show user menu and navigation links
                 guestLinks.classList.add('hidden');
                 userLinks.classList.remove('hidden');
-                userNameEl.textContent = `Welcome,  ${user.name}`;
+                userNameEl.textContent = `Welcome, ${user.name}`;
+                
+                // Show additional navigation links for users
+                userNavLinks.classList.remove('hidden');
+                userNavLinks2.classList.remove('hidden');
+                userNavLinks3.classList.remove('hidden');
 
-                // toggle dropdown on click
+                // Toggle dropdown on click
                 document.getElementById('userBtn').addEventListener('click', () => {
                     dropdown.classList.toggle('hidden');
                 });
 
-                // logout
+                // Logout
                 document.getElementById('logoutBtn').addEventListener('click', () => {
                     localStorage.removeItem('auth_token');
                     localStorage.removeItem('user');
                     window.location.href = '/';
                 });
 
-                // click outside to close
+                // Click outside to close
                 document.addEventListener('click', e => {
                     if (!userLinks.contains(e.target)) {
                         dropdown.classList.add('hidden');
                     }
                 });
-
             } else {
-                // no user → show guest, hide menu
+                // No user or not a regular user → show guest, hide menu and user nav links
                 guestLinks.classList.remove('hidden');
                 userLinks.classList.add('hidden');
+                userNavLinks.classList.add('hidden');
+                userNavLinks2.classList.add('hidden');
+                userNavLinks3.classList.add('hidden');
             }
         });
     </script>

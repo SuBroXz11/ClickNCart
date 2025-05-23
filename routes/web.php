@@ -25,8 +25,17 @@ Route::get('/shops', function () {
 Route::get('/manage-shop', function () {
     return response()->file(resource_path('views/dashboard/manage-shop.html'));
 });
+
 Route::get('/approve-traders', function () {
     return response()->file(resource_path('views/auth/approve-traders.html'));
+});
+
+Route::get('/manage-users', function () {
+    return response()->file(resource_path('views/dashboard/manage-users.html'));
+});
+
+Route::get('/manage-products', function () {
+    return response()->file(resource_path('views/dashboard/manage-products.html'));
 });
 
 Route::get('/profile', function () {
@@ -44,6 +53,11 @@ Route::get('/', function () {
 Route::get('/contact', function () {
     return response()->file(resource_path('views/homepage/contact.html'));
 });
+
+Route::get('/wishlist', function () {
+    return response()->file(resource_path('views/profile/wishlist.html'));
+});
+
 
 Route::get('/products', function () {
     return response()->file(resource_path('views/products/product.html'));

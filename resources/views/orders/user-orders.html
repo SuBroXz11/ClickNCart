@@ -51,13 +51,153 @@
             outline: none;
             box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
         }
+        
+        /* Header Styles */
+        header {
+            background-color: white;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            width: 100%;
+            z-index: 1000;
+        }
+
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 5%;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+        }
+
+        .logo img {
+            height: 64px;
+            width: auto;
+            object-fit: contain;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+        }
+
+        .nav-links li {
+            margin-left: 2rem;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #2d3436;
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: #6c5ce7;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            background: #6c5ce7;
+            bottom: -5px;
+            left: 0;
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .auth-buttons .btn {
+            margin-left: 1rem;
+            padding: 0.5rem 1.2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-outline {
+            border: 2px solid #6c5ce7;
+            padding: 10px 20px;
+            color: #6c5ce7;
+            text-decoration: none;
+            border-radius: 40px;
+        }
+
+        .btn-outline:hover {
+            background: #6c5ce7;
+            color: white;
+        }
+
+        .btn-primary {
+            background: #6c5ce7;
+            color: white;
+            border: 2px solid #6c5ce7;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary:hover {
+            background: #5649c0;
+            border-color: #5649c0;
+        }
     </style>
 </head>
 <body class="bg-gray-50">
-   
+    <!-- Header -->
+    <header>
+        <nav class="navbar">
+            <div class="logo">
+                <a href="/">
+                    <img src="/logo/logo.jpg" alt="ClickNCart Logo" class="h-16 w-auto">
+                </a>
+            </div>
+            <ul class="nav-links">
+                <li><a href="/">Home</a></li>
+                <li><a href="/products">Products</a></li>
+                
+                <li id="userNavLinks2">
+                    <a href="/checkout">Checkout</a>
+                </li>
+                
+                <li><a href="/contact">Contact</a></li>
+            </ul>
+            <div id="navAuth" class="flex items-center space-x-4">
+                <!-- Guest links -->
+                <div id="guestLinks" class="flex space-x-4">
+                    <a href="/login" class="btn btn-outline">Login</a>
+                    <a href="/register" class="btn btn-primary">Sign Up</a>
+                </div>
+                <!-- User dropdown (hidden by default) -->
+                <div id="userLinks" class="relative hidden">
+                    <button id="userBtn" class="flex items-center space-x-1 px-4 py-2 rounded hover:bg-gray-100 transition">
+                        <span id="userName" class="font-medium"></span>
+                        <i class="fas fa-chevron-down text-gray-600"></i>
+                    </button>
+                    <div id="userDropdown" class="absolute right-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg hidden">
+                        <a href="/user-profile" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">My Profile</a>
+                        <button id="logoutBtn" class="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100">
+                            Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+    </header>
 
-    <div class="min-h-screen ">
-       
+    <div class="min-h-screen pt-20"> <!-- Added pt-20 to account for fixed header -->
         <header class="bg-white shadow-sm">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                 <h1 class="text-2xl font-semibold text-gray-900">My Orders</h1>
@@ -65,7 +205,7 @@
         </header>
 
         <!-- Main Content -->
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 mt-20">
             <!-- Orders List -->
             <div class="bg-white shadow rounded-lg overflow-hidden">
                 <div class="overflow-x-auto">
@@ -184,7 +324,55 @@
             }
             loadOrders();
             setupEventListeners();
+            setupHeaderAuth();
         });
+
+        function setupHeaderAuth() {
+            const userStr = localStorage.getItem('user');
+            const authToken = localStorage.getItem('auth_token');
+            let user = null;
+
+            try {
+                user = userStr ? JSON.parse(userStr) : null;
+            } catch (e) {
+                console.error('Failed to parse user from localStorage', e);
+            }
+
+            const guestLinks = document.getElementById('guestLinks');
+            const userLinks = document.getElementById('userLinks');
+            const userNameEl = document.getElementById('userName');
+            const dropdown = document.getElementById('userDropdown');
+            
+            if (authToken && user && user.role === 'user') {
+                // Show user menu and navigation links
+                guestLinks.classList.add('hidden');
+                userLinks.classList.remove('hidden');
+                userNameEl.textContent = `Welcome, ${user.name}`;
+
+                // Toggle dropdown on click
+                document.getElementById('userBtn').addEventListener('click', () => {
+                    dropdown.classList.toggle('hidden');
+                });
+
+                // Logout
+                document.getElementById('logoutBtn').addEventListener('click', () => {
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user');
+                    window.location.href = '/';
+                });
+
+                // Click outside to close
+                document.addEventListener('click', e => {
+                    if (!userLinks.contains(e.target)) {
+                        dropdown.classList.add('hidden');
+                    }
+                });
+            } else {
+                // No user or not a regular user → show guest, hide menu
+                guestLinks.classList.remove('hidden');
+                userLinks.classList.add('hidden');
+            }
+        }
 
         function setupEventListeners() {
             // Pagination listeners

@@ -28,12 +28,12 @@ class JwtMiddleware
                 ], 403);
             }
 
-            if ($user->isRetailer() && $user->isPending()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Your retailer account is pending approval'
-                ], 403);
-            }
+            // if ($user->isRetailer() && $user->isPending()) {
+            //     return response()->json([
+            //         'success' => false,
+            //         'message' => 'Your retailer account is pending approval'
+            //     ], 403);
+            // }
 
             // if ($user->isUser() && !$user->hasVerifiedEmail()) {
             //     return response()->json([

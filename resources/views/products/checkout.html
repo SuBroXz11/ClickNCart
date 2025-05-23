@@ -61,14 +61,12 @@
         .logo {
             display: flex;
             align-items: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--primary);
         }
 
-        .logo i {
-            margin-right: 10px;
-            color: var(--secondary);
+        .logo img {
+            height: 64px;
+            width: auto;
+            object-fit: contain;
         }
 
         .nav-links {
@@ -118,7 +116,10 @@
 
         .btn-outline {
             border: 2px solid var(--primary);
+            padding: 10px 20px;
             color: var(--primary);
+            text-decoration: none;
+            border-radius: 40px;
         }
 
         .btn-outline:hover {
@@ -130,6 +131,10 @@
             background: var(--primary);
             color: white;
             border: 2px solid var(--primary);
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 40px;
+            transition: all 0.3s;
         }
 
         .btn-primary:hover {
@@ -557,14 +562,25 @@
     <header>
         <nav class="navbar">
             <div class="logo">
-                <i class="fas fa-shopping-cart"></i>
-                <span>ClickNCart</span>
+                <a href="/">
+                    <img src="/logo/logo.jpg" alt="ClickNCart Logo" class="h-16 w-auto">
+                </a>
             </div>
             <ul class="nav-links">
                 <li><a href="/">Home</a></li>
                 <li><a href="/products">Products</a></li>
-                <li><a href="/checkout" class="active">Cart</a></li>
+                <li id="userNavLinks">
+                    <a href="/user-orders">Orders</a>
+                </li>
+                <li id="userNavLinks2">
+                    <a href="/checkout" class="active">Cart</a>
+                </li>
+                <li id="userNavLinks3">
+                    <a href="/wishlist">Wishlist</a>
+                </li>
+                <li><a href="/contact">Contact</a></li>
             </ul>
+           
         </nav>
     </header>
 

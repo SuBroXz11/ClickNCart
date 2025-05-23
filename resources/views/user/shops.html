@@ -1065,8 +1065,8 @@
             }
 
             try {
-                const response = await fetch(`/api/shops/${currentShopId}`, {
-                    method: 'PUT',
+                const response = await fetch(`/api/shops/${currentShopId}/update`, {
+                    method: 'POST',
                     headers: {
                         'Authorization': `Bearer ${authToken}`
                     },

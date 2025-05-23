@@ -169,33 +169,63 @@ class AuthController extends Controller
     }
 
     public function resendVerification(Request $request)
-{
-    $user = JWTAuth::user();
+    {
+        try {
+            $user = JWTAuth::user();
 
-    // Check if user is a regular user (not retailer/admin) and hasn't verified email
-    if (!$user->isUser() || $user->hasVerifiedEmail()) {
-        return response()->json([
-            'error' => 'Email verification not required for your account'
-        ], 400);
+            // Check if user has already verified their email
+            if ($user->hasVerifiedEmail()) {
+                return response()->json([
+                    'error' => 'Email already verified'
+                ], 400);
+            }
+
+            // Generate new verification code
+            $newCode = Str::random(6);
+            $user->email_verification_code = $newCode;
+            $user->save();
+
+            // Log the verification code for debugging
+            Log::info('New verification code generated for user: ' . $user->email, [
+                'code' => $newCode,
+                'user_id' => $user->id
+            ]);
+
+            // Send verification email
+            try {
+                Mail::to($user->email)->send(new VerificationEmail($newCode));
+                
+                // Log successful email sending
+                Log::info('Verification email sent successfully to: ' . $user->email);
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => 'New verification code sent to your email'
+                ]);
+            } catch (\Exception $e) {
+                // Log the email sending error
+                Log::error('Failed to send verification email: ' . $e->getMessage(), [
+                    'user_email' => $user->email,
+                    'error' => $e->getMessage()
+                ]);
+
+                // Revert the verification code if email sending fails
+                $user->email_verification_code = null;
+                $user->save();
+
+                return response()->json([
+                    'error' => 'Failed to send verification email. Please try again later.'
+                ], 500);
+            }
+        } catch (\Exception $e) {
+            // Log any other errors
+            Log::error('Error in resendVerification: ' . $e->getMessage());
+            
+            return response()->json([
+                'error' => 'An error occurred while processing your request. Please try again later.'
+            ], 500);
+        }
     }
-
-    // Generate new verification code
-    $newCode = Str::random(6);
-    $user->email_verification_code = $newCode;
-    $user->save();
-
-    try {
-        Mail::to($user->email)->send(new VerificationEmail($newCode));
-        return response()->json([
-            'message' => 'New verification code sent to your email'
-        ]);
-    } catch (\Exception $e) {
-        Log::error('Failed to resend verification email: ' . $e->getMessage());
-        return response()->json([
-            'error' => 'Failed to send verification email. Please try again later.'
-        ], 500);
-    }
-}
 
     public function me()
     {

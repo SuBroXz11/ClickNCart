@@ -41,7 +41,7 @@ Route::get('/products/normal-search', [ProductController::class, 'normalSearch']
 // Protected endpoints
 Route::middleware([JwtMiddleware::class . ':retailer,admin'])->group(function () {
     Route::post('/products', [ProductController::class, 'store']);
-    Route::put('/products/{id}', [ProductController::class, 'update']);
+    Route::post('/products/{id}/update', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
     Route::get('/retailer/products', [ProductController::class, 'getRetailerProducts']);
     Route::get('/retailer/products/{retailerId}', [ProductController::class, 'getRetailerProducts']);
@@ -90,7 +90,7 @@ Route::middleware([JwtMiddleware::class .':retailer'])->group(function () {
     Route::get('/shops/user/{userId?}', [ShopController::class, 'getUserShops']);
     
     Route::get('/shops/{id}', [ShopController::class, 'show']);
-    Route::put('/shops/{id}', [ShopController::class, 'update']);
+    Route::post('/shops/{id}/update', [ShopController::class, 'update']);
     Route::delete('/shops/{id}', [ShopController::class, 'destroy']);
 });
 
