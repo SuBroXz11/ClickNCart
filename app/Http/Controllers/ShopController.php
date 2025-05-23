@@ -88,12 +88,12 @@ class ShopController extends Controller
         // Check authorization:
         // - Admin can view any shop
         // - Retailer can view only their own shop
-        if ($request->user()->role === User::ROLE_RETAILER && $shop->user_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to view this shop'
-            ], 403);
-        }
+        // if ($request->user()->role === User::ROLE_RETAILER && $shop->user_id !== $request->user()->id) {
+        //     return response()->json([
+        //         'success' => false,
+        //         'message' => 'Unauthorized to view this shop'
+        //     ], 403);
+        // }
 
         return response()->json([
             'success' => true,

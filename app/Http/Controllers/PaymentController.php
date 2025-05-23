@@ -209,12 +209,13 @@ class PaymentController extends Controller
                         })->toArray()
                     ]
                 ],
-                'application_context' => [
-                    'brand_name' => config('app.name'),
-                    'return_url' => config('app.frontend_url') . '/payment/success',
-                    'cancel_url' => config('app.frontend_url') . '/payment/cancel',
-                    'user_action' => 'PAY_NOW'
-                ]
+             'application_context' => [
+    'brand_name' => config('app.name'),           // or hard-code this too if you like
+    'return_url' => 'http://clickncart.test/payment/success',
+    'cancel_url' => 'http://clickncart.test/payment/cancel',
+    'user_action'=> 'PAY_NOW',
+],
+
             ]);
 
         if (!$paypalResponse->successful()) {

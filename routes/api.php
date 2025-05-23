@@ -90,9 +90,9 @@ Route::middleware([JwtMiddleware::class .':retailer'])->group(function () {
     Route::post('/shops', [ShopController::class, 'store']);
     Route::get('/shops/user/{userId?}', [ShopController::class, 'getUserShops']);
     
-    Route::get('/shops/{id}', [ShopController::class, 'show']);
     Route::post('/shops/{id}/update', [ShopController::class, 'update']);
     Route::delete('/shops/{id}', [ShopController::class, 'destroy']);
+    Route::get('/shops/{id}', [ShopController::class, 'show']);
 });
 
 Route::get('/shops/all', [ShopController::class, 'getAllShops']);
