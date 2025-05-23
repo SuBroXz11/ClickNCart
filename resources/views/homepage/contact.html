@@ -821,25 +821,40 @@
 
         // Contact Form Submission
         const contactForm = document.getElementById('contactForm');
-
-        contactForm.addEventListener('submit', (e) => {
+            contactForm.addEventListener('submit', async e => {
             e.preventDefault();
 
-            // Get form values
-            const name = document.getElementById('name').value;
-            const email = document.getElementById('email').value;
-            const subject = document.getElementById('subject').value;
-            const message = document.getElementById('message').value;
+            const subject = document.getElementById('subject').value.trim();
+            const message = document.getElementById('message').value.trim();
+            const token = localStorage.getItem('auth_token');
 
-            // Here you would typically send the data to your server
-            console.log('Form submitted:', { name, email, subject, message });
+            if (!token) {
+                return alert('Please log in first!');
+            }
 
-            // Show success message
-            alert('Thank you for your message! Our team will get back to you soon.');
+            try {
+                const res = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ subject, message })
+                });
 
-            // Reset form
-            contactForm.reset();
+                if (res.ok) {
+                    alert('Thanks! Your message is on its way.');
+                    contactForm.reset();
+                } else {
+                    const err = await res.json();
+                    alert(err.message || 'Failed to send.');
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Something went wrong. Try again.');
+            }
         });
+
 
         // Animation on scroll
         const animateElements = document.querySelectorAll('.animate__animated');
@@ -910,6 +925,10 @@
             }
         });
     </script>
+    <script>
+
+    </script>
+
 </body>
 
 </html>

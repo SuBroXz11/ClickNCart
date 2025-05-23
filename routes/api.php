@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\ProfileController;
 use App\Http\Controllers\Api\WishlistController;
 use App\Http\Controllers\OrderManagement;
 use App\Http\Controllers\CollectionSlotController;
+use App\Http\Controllers\Api\ContactController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
@@ -137,4 +138,12 @@ Route::prefix('wishlist')->middleware('auth:api')->group(function(){
     Route::get('/',      [WishlistController::class,'index']);
     Route::post('add',   [WishlistController::class,'add']);
     Route::delete('remove/{id}', [WishlistController::class,'remove']);
+});
+
+Route::middleware('jwt.auth')->group(function () {
+    Route::post('contact', [ContactController::class, 'store']);
+});
+
+Route::middleware([JwtMiddleware::class . ':admin'])->group(function () {
+    Route::get('admin/contacts', [ContactController::class, 'index']);
 });
