@@ -1,4 +1,4 @@
-// navbar.js - Reusable Navbar Component
+// navbar.js – Reusable Sidebar + Admin “Messages” link
 class CustomNavbar extends HTMLElement {
     connectedCallback() {
         this.innerHTML = `
@@ -9,22 +9,15 @@ class CustomNavbar extends HTMLElement {
           font-family: 'Mosvita';
           src: url('./font/mosvita.otf') format('opentype');
         }
-        .nav-item {
-          transition: all 0.3s ease;
-        }
-        .nav-item:hover {
-          background-color: rgba(255,255,255,0.1);
-        }
-        .nav-item.active {
-          background-color: rgba(255,255,255,0.2);
-        }
+        .nav-item { transition: all 0.3s ease; }
+        .nav-item:hover { background-color: rgba(255,255,255,0.1); }
+        .nav-item.active { background-color: rgba(255,255,255,0.2); }
       </style>
-      
+
       <div class="sidebar flex flex-col h-screen w-64 bg-gray-900 text-white fixed top-0 left-0 shadow-lg">
         <div class="p-4 border-b border-gray-700">
           <h1 class="text-xl font-bold flex items-center">
-            <i class="fas fa-chart-line mr-2"></i>
-            <span>ClickNCart</span>
+            <i class="fas fa-chart-line mr-2"></i><span>ClickNCart</span>
           </h1>
         </div>
         <nav class="flex-1 p-2 space-y-1">
@@ -39,6 +32,9 @@ class CustomNavbar extends HTMLElement {
           </button>
           <button id="shopsBtn" class="nav-item w-full flex items-center p-3 rounded-md">
             <i class="fas fa-store mr-3"></i><span>Shops</span>
+          </button>
+          <button id="messagesBtn" class="nav-item w-full flex items-center p-3 rounded-md">
+            <i class="fas fa-envelope-open-text mr-3"></i><span>Messages</span>
           </button>
           <button id="profileBtn" class="nav-item w-full flex items-center p-3 rounded-md">
             <i class="fas fa-user mr-3"></i><span>Profile</span>
@@ -56,45 +52,54 @@ class CustomNavbar extends HTMLElement {
 
 customElements.define("custom-navbar", CustomNavbar);
 
-// after the component’s markup is in the DOM:
 document.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-        const clearActive = () =>
-            document
-                .querySelectorAll(".nav-item")
-                .forEach((i) => i.classList.remove("active"));
+    const user = JSON.parse(localStorage.getItem("user") || "{}");
 
-        // map button IDs to URLs
-        const navMap = {
-            dashboardBtn: "/dashboard",
-            tradersBtn: "/traders",
-            usersBtn: "/users",
-            shopsBtn: "/shops",
-            profileBtn: "/profile",
-        };
+    // hide Messages link if not admin
+    if (user.role !== "admin") {
+        document.getElementById("messagesBtn")?.remove();
+    }
 
-        // attach clicks
-        Object.entries(navMap).forEach(([btnId, path]) => {
-            document.getElementById(btnId)?.addEventListener("click", () => {
-                clearActive();
-                document.getElementById(btnId).classList.add("active");
-                window.location.href = path;
-            });
-        });
+    const clearActive = () =>
+        document
+            .querySelectorAll(".nav-item")
+            .forEach((i) => i.classList.remove("active"));
 
-        // logout
-        document.getElementById("logoutBtn")?.addEventListener("click", () => {
-            localStorage.clear();
-            window.location.href = "/login";
-        });
+    // map IDs → paths
+    const navMap = {
+        dashboardBtn: "/dashboard",
+        tradersBtn: "/traders",
+        usersBtn: "/users",
+        shopsBtn: "/shops",
+        profileBtn: "/profile",
+    };
 
-        // highlight current
-        const current = Object.entries(navMap).find(
-            ([, p]) => p === window.location.pathname
-        );
-        if (current) {
+    // only add messages route if admin
+    if (user.role === "admin") {
+        navMap.messagesBtn = "/user-messages";
+    }
+
+    // attach click handlers
+    Object.entries(navMap).forEach(([btnId, path]) => {
+        document.getElementById(btnId)?.addEventListener("click", () => {
             clearActive();
-            document.getElementById(current[0])?.classList.add("active");
-        }
-    }, 100);
+            document.getElementById(btnId).classList.add("active");
+            window.location.href = path;
+        });
+    });
+
+    // logout
+    document.getElementById("logoutBtn")?.addEventListener("click", () => {
+        localStorage.clear();
+        window.location.href = "/login";
+    });
+
+    // highlight the current
+    const current = Object.entries(navMap).find(
+        ([, p]) => p === window.location.pathname
+    );
+    if (current) {
+        clearActive();
+        document.getElementById(current[0])?.classList.add("active");
+    }
 });

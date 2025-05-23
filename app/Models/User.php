@@ -111,4 +111,10 @@ public function wishlist()
 {
     return $this->hasMany(Wishlist::class);
 }
+public function contacts()
+{
+    return $this->hasMany(ContactMessage::class);
 }
+}
+
+

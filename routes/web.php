@@ -70,6 +70,8 @@ Route::get('/users', function () {
 
 Route::get('/traders', fn() => response()->file(resource_path('views/dashboard/manage-traders.html')));
 
+Route::get('/user-messages', fn() => response()->file(resource_path('views/dashboard/messages.html')));
+
 Route::get('/user-profile', fn() => response()->file(resource_path('views/profile/profile.html')));
 
 Route::get('/wishlist', fn() => response()->file(resource_path('views/profile/wishlist.html')));

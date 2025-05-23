@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>User Messages – ClickNCart</title>
+
+  <!-- Tailwind + FontAwesome -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <!-- your navbar web component (must also live in public/) -->
+  <script src="/navbar.js" defer></script>
+</head>
+<body class="bg-gray-100">
+
+  <!-- sidebar -->
+  <custom-navbar></custom-navbar>
+
+  <!-- main content -->
+  <main class="ml-64 p-8">
+    <h1 class="text-2xl font-bold mb-4">User Messages</h1>
+    <div class="overflow-auto bg-white rounded shadow">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Subject</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sent At</th>
+          </tr>
+        </thead>
+        <tbody id="messagesTable" class="bg-white divide-y divide-gray-200">
+          <!-- JS will inject rows here -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', async()=>{
+    // enforce admin-only
+    const user = JSON.parse(localStorage.getItem('user')||'{}');
+    if (user.role!=='admin') {
+      alert('Access denied');
+      return location.href='/';
+    }
+
+    // fetch messages
+    const token = localStorage.getItem('auth_token');
+    let res;
+    try {
+      res = await fetch('/api/admin/contacts', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+    } catch (e) {
+      return alert('Network error');
+    }
+    if (!res.ok) {
+      return alert('Failed to load messages');
+    }
+
+    const msgs = await res.json();
+    const tbody = document.getElementById('messagesTable');
+    msgs.forEach((m,i) => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="px-6 py-4">${i+1}</td>
+        <td class="px-6 py-4">${m.user?.name||'—'}</td>
+        <td class="px-6 py-4">${m.user?.email||'—'}</td>
+        <td class="px-6 py-4">${m.subject}</td>
+        <td class="px-6 py-4">${m.message}</td>
+        <td class="px-6 py-4">${new Date(m.created_at).toLocaleString()}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  });
+  </script>
+</body>
+</html>
