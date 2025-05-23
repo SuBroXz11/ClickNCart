@@ -708,7 +708,26 @@
             productName.textContent = product.name;
             productNameBreadcrumb.textContent = product.name;
             productBrand.querySelector('span').textContent = product.brand;
-            productPrice.textContent = `$${product.price.toFixed(2)}`;
+            
+            // Price display with discount
+            if (product.is_discount && product.discount_amount) {
+                const originalPrice = product.price;
+                const discountedPrice = product.price - product.discount_amount;
+                const discountPercentage = Math.round((product.discount_amount / product.price) * 100);
+                
+                productPrice.innerHTML = `
+                    <span style="text-decoration: line-through; color: #999; font-size: 0.9em; margin-right: 8px;">
+                        $${originalPrice.toFixed(2)}
+                    </span>
+                    $${discountedPrice.toFixed(2)}
+                    <span style="background-color: #ff4444; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; margin-left: 8px;">
+                        ${discountPercentage}% OFF
+                    </span>
+                `;
+            } else {
+                productPrice.textContent = `$${product.price.toFixed(2)}`;
+            }
+            
             productDescription.textContent = product.description;
             
             // Stock status
@@ -724,9 +743,6 @@
             // Category link
             categoryLink.textContent = product.category;
             categoryLink.href = `/category/${product.category.toLowerCase()}`;
-            
-            // Ratings
-            updateRatingDisplay(product.ratings);
             
             // Images
             displayProductImages(product.images);
@@ -910,6 +926,10 @@
                 addToCartBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Adding...';
                 addToCartBtn.disabled = true;
 
+                // Get product ID from the URL path
+                const pathSegments = window.location.pathname.split('/');
+                const productIdFromPath = pathSegments[pathSegments.length - 1];
+
                 // Make API call to add to cart
                 const response = await fetch(`${API_BASE_URL}/api/cart/add`, {
                     method: 'POST',
@@ -918,7 +938,7 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        product_id: parseInt(productId),
+                        product_id: productIdFromPath,
                         quantity: parseInt(quantityInput.value)
                     })
                 });

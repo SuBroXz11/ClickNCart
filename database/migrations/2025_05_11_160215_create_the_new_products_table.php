@@ -30,6 +30,8 @@ return new class extends Migration
             $table->json('specifications')->nullable()->comment('Product specifications');
             $table->boolean('is_active')->default(true);
             $table->boolean('is_featured')->default(false);
+            $table->boolean('is_discount')->default(false);
+$table->decimal('discount_amount', 10, 2)->nullable();
             $table->timestamps();
             $table->softDeletes();
 

@@ -427,6 +427,11 @@
         .view-details {
             background-color: var(--light-gray);
             color: var(--dark-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
         .view-details:hover {
@@ -1190,11 +1195,24 @@
                 productCard.className = 'product-card';
                 productCard.setAttribute('data-aos', 'fade-up');
                 
-                // Format price
-                const formattedPrice = new Intl.NumberFormat('en-US', {
+                // Calculate discounted price if applicable
+                let displayPrice = product.price;
+                let originalPrice = null;
+                if (product.is_discount && product.discount_amount) {
+                    originalPrice = product.price;
+                    displayPrice = product.price - product.discount_amount;
+                }
+                
+                // Format prices
+                const formattedDisplayPrice = new Intl.NumberFormat('en-US', {
                     style: 'currency',
                     currency: 'NPR'
-                }).format(product.price);
+                }).format(displayPrice);
+                
+                const formattedOriginalPrice = originalPrice ? new Intl.NumberFormat('en-US', {
+                    style: 'currency',
+                    currency: 'NPR'
+                }).format(originalPrice) : null;
                 
                 // Create rating stars
                 const rating = product.ratings?.average || 0;
@@ -1208,35 +1226,34 @@
                     <div class="product-image">
                         <img src="${product.images[0] || 'https://via.placeholder.com/300'}" alt="${product.name}">
                         ${product.is_featured ? '<span class="product-badge">Featured</span>' : ''}
+                        ${product.is_discount && product.discount_amount ? `
+                            <span class="product-badge" style="background-color: #ff4444;">${Math.round((product.discount_amount / product.price) * 100)}% OFF</span>
+                        ` : ''}
                     </div>
                     <div class="product-info">
                         <h3 class="product-title">${product.name}</h3>
                         <p class="product-description">${product.description}</p>
-                        <div class="product-price">${formattedPrice}</div>
+                        <div class="product-price">
+                            ${formattedOriginalPrice ? `
+                                <span style="text-decoration: line-through; color: #999; font-size: 0.9em; margin-right: 8px;">${formattedOriginalPrice}</span>
+                            ` : ''}
+                            ${formattedDisplayPrice}
+                        </div>
                         <div class="product-rating">
                             <div class="stars">${stars}</div>
                             <span class="count">(${product.ratings?.count || 0})</span>
                         </div>
                         <div class="product-actions">
-                            <button class="btn view-details" data-id="${product.product_id}">View Details</button>
-                            <!-- Wishlist button -->
-  <button class="btn add-to-wishlist" data-id="${product.id}">
-    <i class="fas fa-heart"></i>
-  </button>
+                            <a href="/product/${product.product_id}" class="btn view-details">View Details</a>
+                            <button class="btn add-to-wishlist" data-id="${product.id}">
+                                <i class="fas fa-heart"></i>
+                            </button>
                             <button class="btn add-to-cart" data-id="${product.id}">Add to Cart</button>
                         </div>
                     </div>
                 `;
                 
                 productsGrid.appendChild(productCard);
-            });
-            
-            // Add event listeners to view details buttons
-            document.querySelectorAll('.view-details').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const productId = e.target.getAttribute('data-id');
-                    showProductDetails(productId);
-                });
             });
             
             // Add event listeners to add to cart buttons
@@ -1246,13 +1263,13 @@
                     addToCart(productId);
                 });
             });
+            
             document.querySelectorAll('.add-to-wishlist').forEach(btn => {
                 btn.addEventListener('click', e => {
                     const id = e.currentTarget.getAttribute('data-id');
                     addToWishlist(id);
                 });
             });
-
         }
 
         function renderPagination(meta) {
@@ -1302,116 +1319,6 @@
             }
         });
         pagination.appendChild(nextButton);
-    }
-
-    async function showProductDetails(productId) {
-        try {
-            // Show loading state in modal
-            quickViewContent.innerHTML = `
-                <div class="loading-spinner">
-                    <div class="spinner"></div>
-                    <p>Loading product details...</p>
-                </div>
-            `;
-            
-            quickViewModal.style.display = 'flex';
-            
-            const response = await fetch(`${API_BASE_URL}/product/id/${productId}`, {
-                headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Add auth if needed
-                }
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                const product = data.data;
-                
-                // Format price
-                const formattedPrice = new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'NPR'
-                }).format(product.price);
-                
-                // Create rating stars
-                const rating = product.ratings?.average || 0;
-                const stars = Array(5).fill().map((_, i) => 
-                    i < Math.floor(rating) ? '<i class="fas fa-star"></i>' : 
-                    i < rating ? '<i class="fas fa-star-half-alt"></i>' : 
-                    '<i class="far fa-star"></i>'
-                ).join('');
-                
-                // Create specifications list
-                let specsHtml = '';
-                if (product.specifications) {
-                    specsHtml = Object.entries(product.specifications)
-                        .map(([key, value]) => `<li><strong>${key.replace('_', ' ')}:</strong> ${value}</li>`)
-                        .join('');
-                }
-                
-                // Create variants list
-                let variantsHtml = '';
-                if (product.variants && product.variants.length > 0) {
-                    variantsHtml = product.variants
-                        .map(variant => `<li><strong>${variant.color}:</strong> ${variant.stock} in stock</li>`)
-                        .join('');
-                }
-                
-                quickViewContent.innerHTML = `
-                    <div class="quick-view-content">
-                        <div class="quick-view-image">
-                            <img src="${product.images[0] || 'https://via.placeholder.com/500'}" alt="${product.name}">
-                        </div>
-                        <div class="quick-view-details">
-                            <h2>${product.name}</h2>
-                            <div class="quick-view-price">${formattedPrice}</div>
-                            <div class="quick-view-rating">
-                                <div class="stars">${stars}</div>
-                                <span class="count">(${product.ratings?.count || 0} reviews)</span>
-                            </div>
-                            <p class="quick-view-description">${product.description}</p>
-                            
-                            ${specsHtml ? `
-                            <div class="quick-view-specs">
-                                <h4>Specifications</h4>
-                                <ul>${specsHtml}</ul>
-                            </div>
-                            ` : ''}
-                            
-                            ${variantsHtml ? `
-                            <div class="quick-view-specs">
-                                <h4>Available Variants</h4>
-                                <ul>${variantsHtml}</ul>
-                            </div>
-                            ` : ''}
-                            
-                            <div class="quick-view-actions">
-                                <button class="btn btn-primary add-to-cart" data-id="${product.id}">
-                                    <i class="fas fa-shopping-cart"></i> Add to Cart
-                                </button>
-                                
-                            </div>
-                        </div>
-                    </div>
-                `;
-                
-                // Add event listener to add to cart button in modal
-                document.querySelector('.quick-view-actions .add-to-cart').addEventListener('click', () => {
-                    addToCart(product.id);
-                });
-            } else {
-                throw new Error(data.message || 'Failed to load product details');
-            }
-        } catch (error) {
-            console.error('Error loading product details:', error);
-            quickViewContent.innerHTML = `
-                <div class="error-message">
-                    <i class="fas fa-exclamation-circle"></i>
-                    <h3>Failed to load product details</h3>
-                    <p>${error.message}</p>
-                </div>
-            `;
-        }
     }
 
     async function addToCart(productId, quantity = 1) {

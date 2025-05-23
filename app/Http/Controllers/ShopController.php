@@ -7,6 +7,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class ShopController extends Controller
 {
@@ -25,8 +27,8 @@ class ShopController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
             'description' => 'required|string',
-            'logo' => 'sometimes|url',
-            'banner' => 'sometimes|url',
+            'logo' => 'sometimes|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
+            'banner' => 'sometimes|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
             'address' => 'required|string',
             'contact_number' => 'required|string',
             'email' => 'required|email',
@@ -47,6 +49,18 @@ class ShopController extends Controller
         $shopData['shop_id'] = 'SHOP' . Str::random(6);
         $shopData['user_id'] = $request->user()->id;
         $shopData['is_active'] = true;
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            $logoPath = $request->file('logo')->store('shops/logos', 'public');
+            $shopData['logo'] = Storage::url($logoPath);
+        }
+
+        // Handle banner upload
+        if ($request->hasFile('banner')) {
+            $bannerPath = $request->file('banner')->store('shops/banners', 'public');
+            $shopData['banner'] = Storage::url($bannerPath);
+        }
 
         $shop = Shop::create($shopData);
 
@@ -109,11 +123,13 @@ class ShopController extends Controller
             ], 403);
         }
 
+   
+
         $validator = Validator::make($request->all(), [
             'name' => 'sometimes|string|max:255',
             'description' => 'sometimes|string',
-            'logo' => 'sometimes|url',
-            'banner' => 'sometimes|url',
+            'logo' => 'sometimes|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
+            'banner' => 'sometimes|image|mimes:jpg,jpeg,png,gif,svg|max:2048',
             'address' => 'sometimes|string',
             'contact_number' => 'sometimes|string',
             'email' => 'sometimes|email',
@@ -124,6 +140,7 @@ class ShopController extends Controller
         ]);
 
         if ($validator->fails()) {
+        
             return response()->json([
                 'success' => false,
                 'message' => 'Validation errors',
@@ -131,13 +148,62 @@ class ShopController extends Controller
             ], 422);
         }
 
-        $shop->update($validator->validated());
+        $updateData = $validator->validated();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Shop updated successfully',
-            'data' => $shop
-        ]);
+   
+
+        // Handle logo upload
+        if ($request->hasFile('logo')) {
+            // Delete old logo if exists
+            if ($shop->logo) {
+                $oldLogoPath = str_replace('/storage/', '', $shop->logo);
+                if (Storage::disk('public')->exists($oldLogoPath)) {
+                    Storage::disk('public')->delete($oldLogoPath);
+                }
+            }
+            
+            $logoPath = $request->file('logo')->store('shops/logos', 'public');
+            $updateData['logo'] = Storage::url($logoPath);
+        }
+
+        // Handle banner upload
+        if ($request->hasFile('banner')) {
+            // Delete old banner if exists
+            if ($shop->banner) {
+                $oldBannerPath = str_replace('/storage/', '', $shop->banner);
+                if (Storage::disk('public')->exists($oldBannerPath)) {
+                    Storage::disk('public')->delete($oldBannerPath);
+                }
+            }
+            
+            $bannerPath = $request->file('banner')->store('shops/banners', 'public');
+            $updateData['banner'] = Storage::url($bannerPath);
+        }
+
+        // Remove any null values from updateData
+        $updateData = array_filter($updateData, function($value) {
+            return $value !== null;
+        });
+
+
+
+        try {
+            $shop->update($updateData);
+            // Refresh the shop data to get the updated values
+            $shop->refresh();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Shop updated successfully',
+                'data' => $shop
+            ]);
+        } catch (\Exception $e) {
+            
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update shop: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

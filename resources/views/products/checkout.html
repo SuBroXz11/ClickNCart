@@ -504,9 +504,55 @@
                 width: 90%;
             }
         }
+
+        /* Add this to your existing styles */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loader-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .loader-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
+    <!-- Update the loader HTML -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-spinner"></div>
+            <p class="text-lg font-medium text-gray-900">Processing Payment...</p>
+            <p class="text-sm text-gray-500 mt-2">Please wait while we set up your payment</p>
+        </div>
+    </div>
+
     <!-- Header -->
     <header>
         <nav class="navbar">
@@ -674,7 +720,7 @@
         // Allowed days (3=Wednesday, 4=Thursday, 5=Friday)
         const ALLOWED_DAYS = [3, 4, 5];
 
-        // Check authentication on page load
+        // Update the date selection logic
         document.addEventListener('DOMContentLoaded', () => {
             const authToken = localStorage.getItem('auth_token');
             
@@ -689,12 +735,12 @@
 
             // Set minimum date (24 hours from now)
             const today = new Date();
-            today.setDate(today.getDate() + 1); // 24 hours from now
+            today.setHours(today.getHours() + 24); // Add 24 hours
             const minDate = today.toISOString().split('T')[0];
             dateSelect.min = minDate;
 
             // Set default date to the next allowed day
-            let defaultDate = new Date();
+            let defaultDate = new Date(today);
             while (!ALLOWED_DAYS.includes(defaultDate.getDay())) {
                 defaultDate.setDate(defaultDate.getDate() + 1);
             }
@@ -712,9 +758,20 @@
             }
         });
 
+        // Update the date change handler
         dateSelect.addEventListener('change', async (e) => {
             if (e.target.value) {
                 const selectedDate = new Date(e.target.value);
+                const today = new Date();
+                today.setHours(today.getHours() + 24); // Add 24 hours
+
+                // Check if selected date is at least 24 hours from now
+                if (selectedDate < today) {
+                    alert('Please select a date at least 24 hours from now');
+                    dateSelect.value = today.toISOString().split('T')[0];
+                    return;
+                }
+
                 const dayOfWeek = selectedDate.getDay();
                 
                 // Check if selected date is an allowed day
@@ -910,7 +967,7 @@
             await loadAvailableSlots(dateSelect.value);
         });
 
-        // Proceed to checkout with collection slot details
+        // Update the proceedToCheckout function
         async function proceedToCheckout(collectionDetails = null) {
             try {
                 const authToken = localStorage.getItem('auth_token');
@@ -918,6 +975,9 @@
                     window.location.href = '/login';
                     return;
                 }
+
+                // Show loader
+                document.getElementById('loader').style.display = 'flex';
 
                 // Get cart data to calculate totals
                 const cartResponse = await fetch(`${base_url}/api/cart`, {
@@ -932,6 +992,7 @@
                 
                 if (!cartData.success || cartData.cart_items.length === 0) {
                     alert('Your cart is empty');
+                    document.getElementById('loader').style.display = 'none';
                     return;
                 }
 
@@ -944,7 +1005,10 @@
                 const paymentPayload = {
                     total: total,
                     tax: tax,
-                    shipping: shipping
+                    shipping: shipping,
+                    shipping_address: shoppingAddress.value,
+                    billing_address: billingAddress.value,
+                    notes: notes.value
                 };
 
                 // Add collection slot info if provided
@@ -969,6 +1033,9 @@
 
                 const paymentData = await paymentResponse.json();
 
+                // Hide loader
+                document.getElementById('loader').style.display = 'none';
+
                 if (paymentData.success) {
                     // Redirect to PayPal for payment
                     window.location.href = paymentData.data.approve_url;
@@ -979,6 +1046,7 @@
             } catch (error) {
                 console.error('Checkout error:', error);
                 alert('An error occurred during checkout');
+                document.getElementById('loader').style.display = 'none';
             }
         }
 

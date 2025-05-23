@@ -33,6 +33,10 @@ Route::get('/profile', function () {
     return response()->file(resource_path('views/dashboard/profile.html'));
 });
 
+Route::get('/trader-orders', function () {
+    return response()->file(resource_path('views/orders/trader-orders.html'));
+});
+
 Route::get('/', function () {
     return response()->file(resource_path('views/homepage/home.html'));
 });
@@ -43,6 +47,10 @@ Route::get('/contact', function () {
 
 Route::get('/products', function () {
     return response()->file(resource_path('views/products/product.html'));
+});
+
+Route::get('/user-orders', function () {
+    return response()->file(resource_path('views/orders/user-orders.html'));
 });
 
 Route::get('/checkout', function () {

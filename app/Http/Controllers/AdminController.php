@@ -65,6 +65,16 @@ class AdminController extends Controller
         return response()->json(['message' => 'Retailer approved successfully']);
     }
 
+        // In AdminController.php
+public function getUnapprovedRetailers()
+{
+    $retailers = User::where('role', User::ROLE_RETAILER)
+                     ->where('status', User::STATUS_PENDING)
+                     ->get();
+    
+    return response()->json($retailers);
+}
+
     /**
      * POST /api/users/{id}/block
      */

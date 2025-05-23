@@ -38,9 +38,14 @@ class AuthController extends Controller
             'phone_number' => $request->phone_number,
             'address' => $request->address,
             'role' => $request->role,
-            'status' => $request->role === "user" ? User::STATUS_ACTIVE : User::STATUS_PENDING,
+            'status' => User::STATUS_PENDING, // All users start as pending
             'email_verification_code' => Str::random(6),
         ];
+
+        if ($request->hasFile('profile_picture')) {
+            $path = $request->file('profile_picture')->store('profile', 'public');
+            $userData['profile_picture'] = $path;
+        }
 
         if ($request->role === User::ROLE_RETAILER) {
             $retailerValidator = Validator::make($request->all(), [
@@ -64,20 +69,16 @@ class AuthController extends Controller
 
         $user = User::create($userData);
 
-        if ($user->isUser()) {
-            try {
-                Mail::to($user->email)->send(new VerificationEmail($user->email_verification_code));
-            } catch (\Exception $e) {
-                Log::error('Email sending failed: ' . $e->getMessage());
-            }
+        // Send verification email to both users and retailers
+        try {
+            Mail::to($user->email)->send(new VerificationEmail($user->email_verification_code));
+        } catch (\Exception $e) {
+            Log::error('Email sending failed: ' . $e->getMessage());
         }
 
         $token = JWTAuth::fromUser($user);
-
         return response()->json([
-            'message' => $user->isRetailer() ? 
-                'Retailer registered successfully. Waiting for admin approval.' : 
-                'User registered successfully. Please check your email for verification code.',
+            'message' => 'Registration successful. Please check your email for verification code.',
             'token' => $token,
             'expires_in' => config('jwt.ttl') * 60, 
         ], 201);
@@ -101,14 +102,25 @@ class AuthController extends Controller
             return response()->json(['error' => 'Your account has been blocked'], 403);
         }
 
-        if ($user->isRetailer() && $user->isPending()) {
-            return response()->json(['error' => 'Your retailer account is pending approval'], 403);
-        }
-        if ($user->isUser() && $user->isPending()) {
-            return response()->json(['error' => 'Your account is under verification.'], 403);
-        }
-        if ($user->isUser() && !$user->hasVerifiedEmail()) {
-            return response()->json(['error' => 'Please verify your email first'], 403);
+        // Different verification flows for retailers and regular users
+        if ($user->isRetailer()) {
+            // For retailers: Check both email verification and admin approval
+            if (!$user->hasVerifiedEmail()) {
+                return response()->json(['error' => 'Please verify your email first'], 403);
+            }
+            
+            if ($user->isPending()) {
+                return response()->json(['error' => 'Your retailer account is pending admin approval. You will be notified once approved.'], 403);
+            }
+            
+            if (!$user->isActive()) {
+                return response()->json(['error' => 'Your retailer account is not active'], 403);
+            }
+        } else {
+            // For regular users: Only check email verification
+            if (!$user->hasVerifiedEmail()) {
+                return response()->json(['error' => 'Please verify your email first'], 403);
+            }
         }
 
         return response()->json([

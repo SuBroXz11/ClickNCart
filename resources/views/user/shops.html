@@ -7,6 +7,7 @@
     <link rel="preload" href="./font/mosvita.otf" as="font" type="font/otf" crossorigin>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @font-face {
             font-family: 'Mosvita';
@@ -17,8 +18,8 @@
         }
 
         :root {
-            --primary: #6c5ce7;
-            --primary-dark: #5649c0;
+            --primary: #181c24;
+            --primary-dark: #2a2f3a;
             --secondary: #00cec9;
             --dark: #2d3436;
             --light: #f5f6fa;
@@ -40,110 +41,203 @@
             overflow-x: hidden;
         }
 
-        /* Header Styles */
-        header {
-            background-color: white;
-            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-            position: fixed;
-            width: 100%;
-            z-index: 1000;
-        }
-
-        .navbar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 1rem 5%;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        .logo {
-            display: flex;
-            align-items: center;
-            font-size: 1.8rem;
-            font-weight: bold;
-            color: var(--primary);
-        }
-
-        .logo i {
-            margin-right: 10px;
-            color: var(--secondary);
-        }
-
-        .nav-links {
-            display: flex;
-            list-style: none;
-        }
-
-        .nav-links li {
-            margin-left: 2rem;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--dark);
-            font-weight: 500;
-            transition: color 0.3s;
-            position: relative;
-        }
-
-        .nav-links a:hover {
-            color: var(--primary);
-        }
-
-        .nav-links a::after {
-            content: '';
-            position: absolute;
-            width: 0;
-            height: 2px;
-            background: var(--primary);
-            bottom: -5px;
-            left: 0;
-            transition: width 0.3s;
-        }
-
-        .nav-links a:hover::after {
-            width: 100%;
-        }
-
-        .auth-buttons .btn {
-            margin-left: 1rem;
-            padding: 0.5rem 1.2rem;
-            border-radius: 30px;
-            text-decoration: none;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .btn-outline {
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            padding: 8px;
-        }
-
-        .btn-outline:hover {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-            border: 2px solid var(--primary);
-            padding: 4px 8px;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            border-color: var(--primary-dark);
-        }
-
         /* Main Content */
         .main-content {
-            padding: 8rem 5% 3rem;
+            padding: 2rem 5%;
             max-width: 1400px;
             margin: 0 auto;
+            margin-left: 16rem;
+        }
+
+        /* Shops List */
+        .shops-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Shop Item */
+        .shop-item {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            display: flex;
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .shop-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .shop-image {
+            width: 320px;
+            height: 320px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .shop-image img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s ease;
+        }
+
+        .shop-item:hover .shop-image img {
+            transform: scale(1.05);
+        }
+
+        .shop-logo {
+            position: absolute;
+            bottom: 10px;
+            left: 20px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid white;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            z-index: 2;
+        }
+
+        .shop-logo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .shop-content {
+            flex: 1;
+            padding: 1.5rem 1.5rem 1.5rem 140px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .shop-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .shop-title {
+            flex: 1;
+        }
+
+        .shop-name {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 0.25rem;
+        }
+
+        .shop-category {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .shop-status {
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-active {
+            background: rgba(0, 184, 148, 0.1);
+            color: var(--success);
+        }
+
+        .status-inactive {
+            background: rgba(214, 48, 49, 0.1);
+            color: var(--danger);
+        }
+
+        .shop-description {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .shop-details {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #666;
+            font-size: 0.875rem;
+        }
+
+        .detail-item i {
+            color: var(--primary);
+            font-size: 1rem;
+        }
+
+        .shop-actions {
+            display: flex;
+            gap: 1rem;
+            margin-left: auto;
+            align-items: center;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid #eee;
+        }
+
+        .shop-action-btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+        }
+
+        .btn-view {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-view:hover {
+            background: var(--primary-dark);
+        }
+
+        .btn-edit {
+            background: #f8f9fa;
+            color: var(--primary);
+        }
+
+        .btn-edit:hover {
+            background: #e9ecef;
+        }
+
+        .btn-delete {
+            background: #fff5f5;
+            color: var(--danger);
+        }
+
+        .btn-delete:hover {
+            background: #ffe3e3;
         }
 
         /* Page Header */
@@ -152,6 +246,10 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 2rem;
+            background: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .page-header h1 {
@@ -168,120 +266,24 @@
             font-size: 1rem;
             font-weight: 500;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .btn-add-shop:hover {
             background: var(--primary-dark);
-        }
-
-        /* Shops Grid */
-        .shops-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 2rem;
-        }
-
-        /* Shop Card */
-        .shop-card {
-            background: white;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-
-        .shop-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        }
-
-        .shop-banner {
-            height: 150px;
-            background-size: cover;
-            background-position: center;
-            position: relative;
-        }
-
-        .shop-logo {
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            border: 3px solid white;
-            background-size: cover;
-            background-position: center;
-            position: absolute;
-            bottom: -40px;
-            left: 20px;
-            background-color: white;
-        }
-
-        .shop-details {
-            padding: 3rem 1.5rem 1.5rem;
-        }
-
-        .shop-name {
-            font-size: 1.3rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: var(--dark);
-        }
-
-        .shop-description {
-            font-size: 0.9rem;
-            color: #666;
-            margin-bottom: 1rem;
-            display: -webkit-box;
-            -webkit-line-clamp: 3;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
-
-        .shop-stats {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 1rem;
-            font-size: 0.9rem;
-            color: #777;
-        }
-
-        .shop-actions {
-            display: flex;
-            border-top: 1px solid #eee;
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-        }
-
-        .shop-action-btn {
-            flex: 1;
-            text-align: center;
-            padding: 0.5rem;
-            color: var(--primary);
-            font-weight: 500;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .shop-action-btn:hover {
-            color: var(--primary-dark);
-        }
-
-        .shop-action-btn.delete-btn {
-            color: var(--danger);
-        }
-
-        .shop-action-btn.delete-btn:hover {
-            color: #b02a37;
-        }
-
-        .shop-action-btn i {
-            margin-right: 5px;
+            transform: translateY(-2px);
         }
 
         /* Empty State */
         .empty-state {
             text-align: center;
             padding: 5rem 0;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
 
         .empty-state i {
@@ -291,7 +293,7 @@
         }
 
         .empty-state h2 {
-            font-size: 1.8rem;
+            font-size: 2rem;
             margin-bottom: 1rem;
             color: var(--dark);
         }
@@ -302,9 +304,10 @@
             max-width: 500px;
             margin-left: auto;
             margin-right: auto;
+            line-height: 1.6;
         }
 
-        /* Modal */
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -316,13 +319,14 @@
             z-index: 2000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(5px);
         }
 
         .modal-content {
             background: white;
-            border-radius: 10px;
+            border-radius: 15px;
             width: 90%;
-            max-width: 500px;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
             animation: modalFadeIn 0.3s;
@@ -339,11 +343,14 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            background: var(--primary);
+            color: white;
+            border-radius: 15px 15px 0 0;
         }
 
         .modal-header h2 {
             font-size: 1.5rem;
-            color: var(--dark);
+            color: white;
         }
 
         .modal-close {
@@ -351,11 +358,16 @@
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
-            color: #777;
+            color: white;
+            transition: transform 0.3s;
+        }
+
+        .modal-close:hover {
+            transform: rotate(90deg);
         }
 
         .modal-body {
-            padding: 1.5rem;
+            padding: 2rem;
         }
 
         .modal-footer {
@@ -364,6 +376,8 @@
             display: flex;
             justify-content: flex-end;
             gap: 1rem;
+            background: #f8f9fa;
+            border-radius: 0 0 15px 15px;
         }
 
         /* Form Styles */
@@ -382,56 +396,61 @@
             width: 100%;
             padding: 0.8rem;
             border: 1px solid #ddd;
-            border-radius: 5px;
+            border-radius: 8px;
             font-size: 1rem;
-            transition: border-color 0.3s;
+            transition: all 0.3s;
         }
 
         .form-control:focus {
             outline: none;
             border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(24, 28, 36, 0.1);
         }
 
         .form-textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
 
-        /* Delete Confirmation Modal */
-        .delete-confirm-modal .modal-content {
-            max-width: 400px;
-        }
-
-        .delete-confirm-modal .modal-body {
-            text-align: center;
-            padding: 2rem 1.5rem;
-        }
-
-        .delete-confirm-modal .modal-body i {
-            font-size: 3rem;
-            color: var(--danger);
-            margin-bottom: 1.5rem;
-        }
-
-        .delete-confirm-modal .modal-body h3 {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-        }
-
-        .delete-confirm-modal .modal-body p {
-            color: #666;
-            margin-bottom: 1.5rem;
-        }
-
-        .delete-confirm-modal .modal-footer {
+        /* Buttons */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
             justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-outline {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            background: white;
+        }
+
+        .btn-outline:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: 2px solid var(--primary);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            border-color: var(--primary-dark);
         }
 
         .btn-danger {
             background: var(--danger);
             color: white;
             border: 2px solid var(--danger);
-            padding: 4px 8px
         }
 
         .btn-danger:hover {
@@ -439,60 +458,102 @@
             border-color: #bd2130;
         }
 
-        /* Responsive */
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .main-content {
+                margin-left: 0;
+                padding: 1.5rem 2%;
+            }
+
+            .shop-image {
+                width: 280px;
+                height: 220px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .shop-image {
+                width: 240px;
+                height: 200px;
+            }
+
+            .shop-logo {
+                width: 90px;
+                height: 90px;
+                bottom: -35px;
+            }
+
+            .shop-content {
+                padding-left: 120px;
+            }
+        }
+
         @media (max-width: 768px) {
-            .navbar {
-                flex-direction: column;
+            .main-content {
                 padding: 1rem;
             }
 
-            .nav-links {
-                margin-top: 1rem;
-            }
-
-            .nav-links li {
-                margin-left: 1rem;
-                margin-right: 1rem;
-            }
-
-            .auth-buttons {
-                margin-top: 1rem;
-            }
-
-            .main-content {
-                padding-top: 7rem;
-            }
-
-            .page-header {
+            .shop-item {
                 flex-direction: column;
-                align-items: flex-start;
-                gap: 1rem;
+                margin-bottom: 3rem;
             }
 
-            .shops-grid {
-                grid-template-columns: 1fr;
+            .shop-image {
+                width: 100%;
+                height: 200px;
             }
 
-          
+            .shop-logo {
+                width: 100px;
+                height: 100px;
+                bottom: -50px;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            .shop-content {
+                padding: 3.5rem 1.5rem 1.5rem;
+            }
+
+            .shop-actions {
+                margin-top: 1.5rem;
+                padding-top: 1.25rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .shop-image {
+                height: 180px;
+            }
+
+            .shop-logo {
+                width: 90px;
+                height: 90px;
+                bottom: -45px;
+            }
+
+            .shop-content {
+                padding: 3rem 1rem 1rem;
+            }
+
+            .shop-actions {
+                flex-direction: column;
+                width: 100%;
+                gap: 0.75rem;
+            }
+
+            .shop-action-btn {
+                width: 100%;
+                justify-content: center;
+                padding: 0.9rem 1.5rem;
+            }
         }
     </style>
 </head>
-<body>
-    <!-- Header -->
-    <header>
-        <nav class="navbar">
-            <div class="logo">
-                <i class="fas fa-shopping-cart"></i>
-                <span>ClickNCart</span>
-            </div>
-            <ul class="nav-links">
-                <li><a href="/">Home</a></li>
-                <li><a href="/products">Products</a></li>
-                <li><a href="/shops" class="active">My Shops</a></li>
-                <li><a href="/orders">Orders</a></li>
-            </ul>
-        </nav>
-    </header>
+<body class="bg-gray-50">
+    <!-- Navbar Component -->
+    <custom-navbar></custom-navbar>
+    <script src="./navbar.js"></script>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -503,8 +564,8 @@
             </button>
         </div>
 
-        <!-- Shops Grid -->
-        <div class="shops-grid" id="shopsContainer">
+        <!-- Shops List -->
+        <div class="shops-list" id="shopsContainer">
             <!-- Shops will be loaded here dynamically -->
         </div>
 
@@ -514,7 +575,7 @@
             <h2>No Shops Found</h2>
             <p>You haven't created any shops yet. Start by adding your first shop to sell products.</p>
             <button class="btn btn-primary" id="emptyStateAddBtn">
-               Add Your First Shop
+                 Add Your First Shop
             </button>
         </div>
     </main>
@@ -537,12 +598,18 @@
                         <textarea id="shopDescription" class="form-control form-textarea" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="shopLogo">Logo URL</label>
-                        <input type="url" id="shopLogo" class="form-control">
+                        <label for="shopLogo">Shop Logo</label>
+                        <input type="file" id="shopLogo" class="form-control" accept="image/*">
+                        <div class="image-preview" id="shopLogoPreview">
+                            <img src="" alt="Logo Preview" style="display: none; max-width: 100px; max-height: 100px; margin-top: 10px;">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="shopBanner">Banner URL</label>
-                        <input type="url" id="shopBanner" class="form-control">
+                        <label for="shopBanner">Shop Banner</label>
+                        <input type="file" id="shopBanner" class="form-control" accept="image/*">
+                        <div class="image-preview" id="shopBannerPreview">
+                            <img src="" alt="Banner Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 10px;">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="shopAddress">Address</label>
@@ -588,12 +655,18 @@
                         <textarea id="editShopDescription" class="form-control form-textarea" required></textarea>
                     </div>
                     <div class="form-group">
-                        <label for="editShopLogo">Logo URL</label>
-                        <input type="url" id="editShopLogo" class="form-control">
+                        <label for="editShopLogo">Shop Logo</label>
+                        <input type="file" id="editShopLogo" class="form-control" accept="image/*">
+                        <div class="image-preview" id="editShopLogoPreview">
+                            <img src="" alt="Logo Preview" style="display: none; max-width: 100px; max-height: 100px; margin-top: 10px;">
+                        </div>
                     </div>
                     <div class="form-group">
-                        <label for="editShopBanner">Banner URL</label>
-                        <input type="url" id="editShopBanner" class="form-control">
+                        <label for="editShopBanner">Shop Banner</label>
+                        <input type="file" id="editShopBanner" class="form-control" accept="image/*">
+                        <div class="image-preview" id="editShopBannerPreview">
+                            <img src="" alt="Banner Preview" style="display: none; max-width: 100%; max-height: 200px; margin-top: 10px;">
+                        </div>
                     </div>
                     <div class="form-group">
                         <label for="editShopAddress">Address</label>
@@ -624,9 +697,9 @@
     <div class="modal delete-confirm-modal" id="deleteConfirmModal">
         <div class="modal-content">
             <div class="modal-body">
-                <i class="fas fa-exclamation-triangle"></i>
-                <h3>Delete Shop</h3>
-                <p>Are you sure you want to delete this shop? This action cannot be undone.</p>
+                <i class="fas fa-exclamation-triangle text-5xl text-red-500 mb-4"></i>
+                <h3 class="text-2xl font-semibold mb-2">Delete Shop</h3>
+                <p class="text-gray-600">Are you sure you want to delete this shop? This action cannot be undone.</p>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-outline" id="cancelDeleteShop">Cancel</button>
@@ -636,7 +709,7 @@
     </div>
 
     <script>
-                // Base URL for API
+        // Base URL for API
         
         // DOM Elements
         const shopsContainer = document.getElementById('shopsContainer');
@@ -705,96 +778,97 @@
             }
         }
 
-        // Display shops in the grid
+        // Display shops in the list
         function displayShops(shops) {
             shopsContainer.innerHTML = '';
             emptyState.style.display = 'none';
             
             shops.forEach(shop => {
-                const shopCard = createShopCard(shop);
-                shopsContainer.appendChild(shopCard);
+                const shopItem = createShopCard(shop);
+                shopsContainer.appendChild(shopItem);
             });
         }
 
         // Create shop card HTML element
         function createShopCard(shop) {
-            const shopCard = document.createElement('div');
-            shopCard.className = 'shop-card animate__animated animate__fadeIn';
+            const shopItem = document.createElement('div');
+            shopItem.className = 'shop-item animate__animated animate__fadeIn';
             
-            // Shop banner with logo
-            const shopBanner = document.createElement('div');
-            shopBanner.className = 'shop-banner';
-            shopBanner.style.backgroundImage = `url(${shop.banner || 'https://via.placeholder.com/600x200?text=Shop+Banner'})`;
+            // Shop image with logo
+            const shopImage = document.createElement('div');
+            shopImage.className = 'shop-image';
+            shopImage.innerHTML = `
+                <img src="${shop.banner || 'https://via.placeholder.com/600x400?text=Shop+Banner'}" alt="${shop.name}">
+                <div class="shop-logo">
+                    <img src="${shop.logo || 'https://via.placeholder.com/80?text=Logo'}" alt="${shop.name}">
+                </div>
+            `;
             
-            const shopLogo = document.createElement('div');
-            shopLogo.className = 'shop-logo';
-            shopLogo.style.backgroundImage = `url(${shop.logo || 'https://via.placeholder.com/80?text=Logo'})`;
+            // Shop content
+            const shopContent = document.createElement('div');
+            shopContent.className = 'shop-content';
             
-            shopBanner.appendChild(shopLogo);
+            // Shop header
+            const shopHeader = document.createElement('div');
+            shopHeader.className = 'shop-header';
+            shopHeader.innerHTML = `
+                <div class="shop-title">
+                    <h3 class="shop-name">${shop.name}</h3>
+                    <div class="shop-category">${shop.category || 'General Store'}</div>
+                </div>
+                <span class="shop-status ${shop.is_active ? 'status-active' : 'status-inactive'}">
+                    ${shop.is_active ? 'Active' : 'Inactive'}
+                </span>
+            `;
             
-            // Shop details
-            const shopDetails = document.createElement('div');
-            shopDetails.className = 'shop-details';
-            
-            const shopName = document.createElement('h3');
-            shopName.className = 'shop-name';
-            shopName.textContent = shop.name;
-            
+            // Shop description
             const shopDesc = document.createElement('p');
             shopDesc.className = 'shop-description';
             shopDesc.textContent = shop.description;
             
-            // Shop stats
-            const shopStats = document.createElement('div');
-            shopStats.className = 'shop-stats';
-            
-            const shopStatus = document.createElement('span');
-            shopStatus.innerHTML = ` ${shop.is_active ? 'Active' : 'Inactive'}`;
-            
-            const productsCount = document.createElement('span'); // You can update this with actual product count
-            
-            shopStats.appendChild(shopStatus);
-            shopStats.appendChild(productsCount);
+            // Shop details
+            const shopDetails = document.createElement('div');
+            shopDetails.className = 'shop-details';
+            shopDetails.innerHTML = `
+                <div class="detail-item">
+                    <i class="fas fa-map-marker-alt"></i>
+                    <span>${shop.address}</span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-phone"></i>
+                    <span>${shop.contact_number}</span>
+                </div>
+                <div class="detail-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>${shop.email}</span>
+                </div>
+            `;
             
             // Shop actions
             const shopActions = document.createElement('div');
             shopActions.className = 'shop-actions';
+            shopActions.innerHTML = `
+                <button class="shop-action-btn btn-view" onclick="window.location.href='/manage-shop?shop_id=${shop.shop_id}'">
+                    <i class="fas fa-eye"></i> View Shop
+                </button>
+                <button class="shop-action-btn btn-edit" onclick="openEditShopModal(${JSON.stringify(shop).replace(/"/g, '&quot;')})">
+                    <i class="fas fa-edit"></i> Edit
+                </button>
+                <button class="shop-action-btn btn-delete" onclick="openDeleteConfirmModal('${shop.shop_id}')">
+                    <i class="fas fa-trash"></i> Delete
+                </button>
+            `;
             
-            const viewBtn = document.createElement('div');
-            viewBtn.className = 'shop-action-btn';
-            viewBtn.innerHTML = '<i class="fas fa-eye"></i> View';
-            viewBtn.addEventListener('click', () => {
-                window.location.href = `/manage-shop?shop_id=${shop.shop_id}`;
-            });
+            // Assemble the shop item
+            shopContent.appendChild(shopHeader);
+            shopContent.appendChild(shopDesc);
+            shopContent.appendChild(shopDetails);
+            shopContent.appendChild(shopActions);
             
-            const editBtn = document.createElement('div');
-            editBtn.className = 'shop-action-btn';
-            editBtn.innerHTML = '<i class="fas fa-edit"></i> Edit';
-            editBtn.addEventListener('click', () => {
-                openEditShopModal(shop);
-            });
+            shopItem.appendChild(shopImage);
+            shopItem.appendChild(shopContent);
             
-            const deleteBtn = document.createElement('div');
-            deleteBtn.className = 'shop-action-btn delete-btn';
-            deleteBtn.innerHTML = '<i class="fas fa-trash"></i> Delete';
-            deleteBtn.addEventListener('click', () => {
-                openDeleteConfirmModal(shop.shop_id);
-            });
-            
-            shopActions.appendChild(viewBtn);
-            shopActions.appendChild(editBtn);
-            shopActions.appendChild(deleteBtn);
-            
-            // Assemble the shop card
-            shopDetails.appendChild(shopName);
-            shopDetails.appendChild(shopDesc);
-            shopDetails.appendChild(shopStats);
-            shopDetails.appendChild(shopActions);
-            
-            shopCard.appendChild(shopBanner);
-            shopCard.appendChild(shopDetails);
-            
-            return shopCard;
+            return shopItem;
         }
 
         // Show empty state
@@ -810,12 +884,28 @@
             document.getElementById('editShopId').value = shop.shop_id;
             document.getElementById('editShopName').value = shop.name;
             document.getElementById('editShopDescription').value = shop.description;
-            document.getElementById('editShopLogo').value = shop.logo || '';
-            document.getElementById('editShopBanner').value = shop.banner || '';
             document.getElementById('editShopAddress').value = shop.address;
             document.getElementById('editShopContact').value = shop.contact_number;
             document.getElementById('editShopEmail').value = shop.email;
             document.getElementById('editShopWebsite').value = shop.website || '';
+            
+            // Set current images as preview
+            const logoPreview = document.getElementById('editShopLogoPreview').querySelector('img');
+            const bannerPreview = document.getElementById('editShopBannerPreview').querySelector('img');
+            
+            if (shop.logo) {
+                logoPreview.src = shop.logo;
+                logoPreview.style.display = 'block';
+            } else {
+                logoPreview.style.display = 'none';
+            }
+            
+            if (shop.banner) {
+                bannerPreview.src = shop.banner;
+                bannerPreview.style.display = 'block';
+            } else {
+                bannerPreview.style.display = 'none';
+            }
             
             editShopModal.style.display = 'flex';
         }
@@ -868,6 +958,34 @@
             }
         });
 
+        // Add image preview functionality
+        function setupImagePreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId).querySelector('img');
+            
+            input.addEventListener('change', function() {
+                const file = this.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        preview.src = e.target.result;
+                        preview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.style.display = 'none';
+                }
+            });
+        }
+
+        // Setup image previews for add form
+        setupImagePreview('shopLogo', 'shopLogoPreview');
+        setupImagePreview('shopBanner', 'shopBannerPreview');
+
+        // Setup image previews for edit form
+        setupImagePreview('editShopLogo', 'editShopLogoPreview');
+        setupImagePreview('editShopBanner', 'editShopBannerPreview');
+
         // Save new shop
         saveShopBtn.addEventListener('click', async () => {
             const authToken = localStorage.getItem('auth_token');
@@ -876,25 +994,31 @@
                 return;
             }
 
-            const shopData = {
-                name: document.getElementById('shopName').value,
-                description: document.getElementById('shopDescription').value,
-                logo: document.getElementById('shopLogo').value,
-                banner: document.getElementById('shopBanner').value,
-                address: document.getElementById('shopAddress').value,
-                contact_number: document.getElementById('shopContact').value,
-                email: document.getElementById('shopEmail').value,
-                website: document.getElementById('shopWebsite').value
-            };
+            const formData = new FormData();
+            formData.append('name', document.getElementById('shopName').value);
+            formData.append('description', document.getElementById('shopDescription').value);
+            formData.append('address', document.getElementById('shopAddress').value);
+            formData.append('contact_number', document.getElementById('shopContact').value);
+            formData.append('email', document.getElementById('shopEmail').value);
+            formData.append('website', document.getElementById('shopWebsite').value);
+
+            const logoFile = document.getElementById('shopLogo').files[0];
+            const bannerFile = document.getElementById('shopBanner').files[0];
+
+            if (logoFile) {
+                formData.append('logo', logoFile);
+            }
+            if (bannerFile) {
+                formData.append('banner', bannerFile);
+            }
 
             try {
                 const response = await fetch(`/api/shops`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${authToken}`
                     },
-                    body: JSON.stringify(shopData)
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -902,6 +1026,8 @@
                 if (data.success) {
                     addShopModal.style.display = 'none';
                     addShopForm.reset();
+                    document.getElementById('shopLogoPreview').querySelector('img').style.display = 'none';
+                    document.getElementById('shopBannerPreview').querySelector('img').style.display = 'none';
                     loadShops(authToken);
                 } else {
                     alert('Failed to create shop: ' + data.message);
@@ -920,25 +1046,31 @@
                 return;
             }
 
-            const shopData = {
-                name: document.getElementById('editShopName').value,
-                description: document.getElementById('editShopDescription').value,
-                logo: document.getElementById('editShopLogo').value,
-                banner: document.getElementById('editShopBanner').value,
-                address: document.getElementById('editShopAddress').value,
-                contact_number: document.getElementById('editShopContact').value,
-                email: document.getElementById('editShopEmail').value,
-                website: document.getElementById('editShopWebsite').value
-            };
+            const formData = new FormData();
+            formData.append('name', document.getElementById('editShopName').value);
+            formData.append('description', document.getElementById('editShopDescription').value);
+            formData.append('address', document.getElementById('editShopAddress').value);
+            formData.append('contact_number', document.getElementById('editShopContact').value);
+            formData.append('email', document.getElementById('editShopEmail').value);
+            formData.append('website', document.getElementById('editShopWebsite').value);
+
+            const logoFile = document.getElementById('editShopLogo').files[0];
+            const bannerFile = document.getElementById('editShopBanner').files[0];
+
+            if (logoFile) {
+                formData.append('logo', logoFile);
+            }
+            if (bannerFile) {
+                formData.append('banner', bannerFile);
+            }
 
             try {
                 const response = await fetch(`/api/shops/${currentShopId}`, {
                     method: 'PUT',
                     headers: {
-                        'Authorization': `Bearer ${authToken}`,
-                        'Content-Type': 'application/json'
+                        'Authorization': `Bearer ${authToken}`
                     },
-                    body: JSON.stringify(shopData)
+                    body: formData
                 });
 
                 const data = await response.json();
@@ -946,6 +1078,8 @@
                 if (data.success) {
                     editShopModal.style.display = 'none';
                     editShopForm.reset();
+                    document.getElementById('editShopLogoPreview').querySelector('img').style.display = 'none';
+                    document.getElementById('editShopBannerPreview').querySelector('img').style.display = 'none';
                     loadShops(authToken);
                 } else {
                     alert('Failed to update shop: ' + data.message);

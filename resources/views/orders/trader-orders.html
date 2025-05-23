@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Orders - ClickNCart</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/mosvita@1.0.0/dist/mosvita.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/mosvita@1.0.0/dist/mosvita.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @font-face {
+            font-family: 'Mosvita';
+            src: url('./font/mosvita.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+            font-display: swap;
+        }
+        body {
+            font-family: 'Mosvita', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* Add input styling */
+        .input-field {
+            border: 1px solid #e2e8f0;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            width: 100%;
+            transition: border-color 0.15s ease-in-out;
+        }
+        .input-field:focus {
+            border-color: #4f46e5;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Navbar Component -->
+    <custom-navbar></custom-navbar>
+    <script src="./navbar.js"></script>
+
+    <div class="min-h-screen ml-64"> <!-- Added margin-left to account for sidebar -->
+        <!-- Header -->
+        <header class="bg-white shadow-sm">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h1 class="text-2xl font-semibold text-gray-900">Manage Orders</h1>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Filters -->
+            <div class="mb-6 flex flex-wrap gap-4">
+                <select id="statusFilter" class="rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 p-2 px-4">
+                    <option value="">All Orders</option>
+                    <option value="processing">Processing</option>
+                    <option value="shipped">Shipped</option>
+                </select>
+            </div>
+
+            <!-- Orders List -->
+            <div class="bg-white shadow rounded-lg overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ordersList" class="bg-white divide-y divide-gray-200">
+                            <!-- Orders will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="mt-4 flex justify-between items-center">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="currentPage">1</span> of <span id="totalPages">1</span> pages
+                </div>
+                <div class="flex gap-2">
+                    <button id="prevPage" class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Previous
+                    </button>
+                    <button id="nextPage" class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Status Update Modal -->
+    <div id="statusModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-medium text-gray-900">Update Order Status</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <p class="text-sm text-gray-600 mb-4">Are you sure you want to mark this order as <span id="newStatusText" class="font-semibold"></span>?</p>
+                    <p class="text-xs text-gray-500">This action cannot be undone.</p>
+                </div>
+                <div class="px-6 py-4 border-t flex justify-end gap-3">
+                    <button id="cancelStatusUpdate" class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button id="confirmStatusUpdate" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Confirm Update
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Cancel Handling Modal -->
+    <div id="cancelHandlingModal" class="fixed inset-0 bg-gray-500 bg-opacity-75 hidden">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg shadow-xl max-w-md w-full">
+                <div class="px-6 py-4 border-b">
+                    <h3 class="text-lg font-medium text-gray-900">Handle Cancellation Request</h3>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="mb-4">
+                        <label for="cancelAction" class="block text-sm font-medium text-gray-700 mb-2">Action</label>
+                        <select id="cancelAction" class="input-field">
+                            <option value="approve">Approve</option>
+                            <option value="reject">Reject</option>
+                        </select>
+                    </div>
+                    <div id="rejectReasonContainer" class="mb-4 hidden">
+                        <label for="rejectReason" class="block text-sm font-medium text-gray-700 mb-2">Reason for Rejection</label>
+                        <textarea id="rejectReason" rows="4" class="input-field"></textarea>
+                    </div>
+                </div>
+                <div class="px-6 py-4 border-t flex justify-end gap-3">
+                    <button id="cancelHandlingBtn" class="px-4 py-2 border rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        Cancel
+                    </button>
+                    <button id="confirmCancelHandlingBtn" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700">
+                        Confirm
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPage = 1;
+        let currentOrderId = null;
+        let orders = []; // Add this line to store orders globally
+        const token = localStorage.getItem('auth_token');
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!token) {
+                showNotification('Please login to access this page', 'error');
+                window.location.href = '/login.html';
+                return;
+            }
+            loadOrders();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Filter listeners
+            document.getElementById('statusFilter').addEventListener('change', () => {
+                currentPage = 1;
+                loadOrders();
+            });
+
+            // Pagination listeners
+            document.getElementById('prevPage').addEventListener('click', () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadOrders();
+                }
+            });
+            document.getElementById('nextPage').addEventListener('click', () => {
+                currentPage++;
+                loadOrders();
+            });
+
+            // Modal listeners
+            document.getElementById('cancelStatusUpdate').addEventListener('click', () => {
+                document.getElementById('statusModal').classList.add('hidden');
+            });
+            document.getElementById('confirmStatusUpdate').addEventListener('click', updateOrderStatus);
+
+            // Cancel handling modal listeners
+            document.getElementById('cancelAction').addEventListener('change', (e) => {
+                const rejectReasonContainer = document.getElementById('rejectReasonContainer');
+                rejectReasonContainer.classList.toggle('hidden', e.target.value !== 'reject');
+            });
+
+            document.getElementById('cancelHandlingBtn').addEventListener('click', () => {
+                document.getElementById('cancelHandlingModal').classList.add('hidden');
+            });
+
+            document.getElementById('confirmCancelHandlingBtn').addEventListener('click', processCancellation);
+        }
+
+        async function loadOrders() {
+            try {
+                const status = document.getElementById('statusFilter').value;
+                
+                let url = `/api/orders/shop?page=${currentPage}`;
+                if (status) url += `&status=${status}`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Accept': 'application/json'
+                    }
+                });
+
+                if (response.status === 401) {
+                    showNotification('Session expired. Please login again', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Failed to fetch orders');
+
+                const responseData = await response.json();
+                if (responseData.success) {
+                    orders = responseData.data.data; // Store orders globally
+                    renderOrders(orders);
+                    updatePagination(responseData.data);
+                } else {
+                    throw new Error('Failed to fetch orders');
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                showNotification('Error loading orders', 'error');
+            }
+        }
+
+        function renderOrders(orders) {
+            const ordersList = document.getElementById('ordersList');
+            ordersList.innerHTML = '';
+
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${order.order_item_id}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded-full" src="${order.order.user.profile_picture || 'https://via.placeholder.com/40'}" alt="">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${order.order.user.name}</div>
+                                <div class="text-sm text-gray-500">${order.order.user.email}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">
+                        <div class="flex items-center">
+                            <div class="flex-shrink-0 h-10 w-10">
+                                <img class="h-10 w-10 rounded object-cover" src="${order.product.images[0] || 'https://via.placeholder.com/40'}" alt="">
+                            </div>
+                            <div class="ml-4">
+                                <div class="text-sm font-medium text-gray-900">${order.product_name}</div>
+                                <div class="text-sm text-gray-500">
+                                    Quantity: ${order.quantity}
+                                    ${order.product.variants ? `<br>Variant: ${order.product.variants[0]?.color || 'N/A'}` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        <div class="text-sm font-medium">$${order.total}</div>
+                        <div class="text-xs text-gray-500">
+                            Subtotal: $${order.order.subtotal}<br>
+                            Tax: $${order.order.tax}<br>
+                            Shipping: $${order.order.shipping}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(order.status)}">
+                            ${order.status}
+                        </span>
+                        ${order.cancel_requested ? `
+                            <span class="mt-1 block px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCancelRequestColor(order.cancel_requested)}">
+                                ${getCancelRequestText(order.cancel_requested)}
+                            </span>
+                            ${order.cancel_reason ? `
+                                <div class="mt-1 text-xs text-gray-500">
+                                    Reason: ${order.cancel_reason}
+                                </div>
+                            ` : ''}
+                        ` : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${new Date(order.created_at).toLocaleDateString()}
+                        <div class="text-xs text-gray-500">
+                            ${new Date(order.created_at).toLocaleTimeString()}
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        ${getActionButtons(order)}
+                    </td>
+                `;
+                ordersList.appendChild(row);
+            });
+        }
+
+        function getStatusColor(status) {
+            const colors = {
+                pending: 'bg-yellow-100 text-yellow-800',
+                processing: 'bg-blue-100 text-blue-800',
+                shipped: 'bg-purple-100 text-purple-800',
+                delivered: 'bg-green-100 text-green-800',
+                cancelled: 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getCancelRequestColor(status) {
+            const colors = {
+                pending: 'bg-yellow-100 text-yellow-800',
+                approved: 'bg-green-100 text-green-800',
+                rejected: 'bg-red-100 text-red-800'
+            };
+            return colors[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getCancelRequestText(status) {
+            const texts = {
+                pending: 'Cancel Requested',
+                approved: 'Cancellation Approved',
+                rejected: 'Cancellation Rejected'
+            };
+            return texts[status] || status;
+        }
+
+        function getActionButtons(order) {
+            let buttons = '';
+            
+            if (order.status === 'pending') {
+                buttons += `
+                    <button onclick="openStatusModal('${order.order_item_id}', 'processing')" 
+                            class="text-indigo-600 hover:text-indigo-900 mr-2">
+                        Mark as Processing
+                    </button>
+                `;
+            } else if (order.status === 'processing') {
+                buttons += `
+                    <button onclick="openStatusModal('${order.order_item_id}', 'shipped')" 
+                            class="text-indigo-600 hover:text-indigo-900 mr-2">
+                        Mark as Shipped
+                    </button>
+                `;
+            }
+
+            if (order.cancel_requested === 'pending') {
+                buttons += `
+                    <button onclick="handleCancelRequest('${order.order_item_id}')" 
+                            class="text-red-600 hover:text-red-900">
+                        Handle Cancel
+                    </button>
+                `;
+            }
+
+            return buttons || 'No actions available';
+        }
+
+        function openStatusModal(orderId, newStatus) {
+            currentOrderId = orderId;
+            const modal = document.getElementById('statusModal');
+            const newStatusText = document.getElementById('newStatusText');
+            
+            newStatusText.textContent = newStatus.charAt(0).toUpperCase() + newStatus.slice(1);
+            modal.classList.remove('hidden');
+        }
+
+        function handleCancelRequest(orderItemId) {
+            currentOrderId = orderItemId;
+            document.getElementById('cancelHandlingModal').classList.remove('hidden');
+            document.getElementById('cancelAction').value = 'approve';
+            document.getElementById('rejectReason').value = '';
+            document.getElementById('rejectReasonContainer').classList.add('hidden');
+        }
+
+        async function processCancellation() {
+            try {
+                const action = document.getElementById('cancelAction').value;
+                const reason = document.getElementById('rejectReason').value;
+
+                if (action === 'reject' && !reason.trim()) {
+                    showNotification('Please provide a reason for rejection', 'error');
+                    return;
+                }
+
+                const response = await fetch(`/api/orders/${currentOrderId}/process-cancellation`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        action: action,
+                        reason: reason || ''
+                    })
+                });
+
+                if (response.status === 401) {
+                    showNotification('Session expired. Please login again', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to process cancellation');
+                }
+
+                document.getElementById('cancelHandlingModal').classList.add('hidden');
+                showNotification(`Cancellation ${action}ed successfully`, 'success');
+                
+                // Update the order in the local array
+                const orderIndex = orders.findIndex(o => o.order_item_id === currentOrderId);
+                if (orderIndex !== -1) {
+                    if (action === 'approve') {
+                        orders[orderIndex].status = 'cancelled';
+                        orders[orderIndex].cancel_requested = 'approved';
+                    } else {
+                        orders[orderIndex].cancel_requested = 'rejected';
+                        orders[orderIndex].cancel_reason = reason;
+                    }
+                    renderOrders(orders);
+                }
+            } catch (error) {
+                console.error('Error processing cancellation:', error);
+                showNotification(error.message || 'Error processing cancellation request', 'error');
+            }
+        }
+
+        async function updateOrderStatus() {
+            try {
+                const order = orders.find(o => o.order_item_id === currentOrderId);
+                if (!order) {
+                    throw new Error('Order not found');
+                }
+
+                const newStatus = order.status === 'pending' ? 'processing' : 'shipped';
+                
+                const response = await fetch(`/api/orders/${currentOrderId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+
+                if (response.status === 401) {
+                    showNotification('Session expired. Please login again', 'error');
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to update status');
+                }
+
+                document.getElementById('statusModal').classList.add('hidden');
+                showNotification('Order status updated successfully', 'success');
+                
+                // Update the order in the local array
+                const orderIndex = orders.findIndex(o => o.order_item_id === currentOrderId);
+                if (orderIndex !== -1) {
+                    orders[orderIndex].status = newStatus;
+                    renderOrders(orders);
+                }
+            } catch (error) {
+                console.error('Error updating status:', error);
+                showNotification(error.message || 'Error updating order status', 'error');
+            }
+        }
+
+        function updatePagination(meta) {
+            document.getElementById('currentPage').textContent = meta.current_page;
+            document.getElementById('totalPages').textContent = meta.last_page;
+            
+            const prevButton = document.getElementById('prevPage');
+            const nextButton = document.getElementById('nextPage');
+            
+            prevButton.disabled = meta.current_page === 1;
+            nextButton.disabled = meta.current_page === meta.last_page;
+            
+            // Update button styles based on disabled state
+            prevButton.classList.toggle('opacity-50', meta.current_page === 1);
+            nextButton.classList.toggle('opacity-50', meta.current_page === meta.last_page);
+        }
+
+        function showNotification(message, type = 'success') {
+            // Using Mosvita's notification system
+            const notification = new mosvita.Notification({
+                message: message,
+                type: type,
+                duration: 3000
+            });
+            notification.show();
+        }
+    </script>
+</body>
+</html>

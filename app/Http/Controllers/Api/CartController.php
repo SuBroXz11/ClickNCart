@@ -22,21 +22,49 @@ class CartController extends Controller
         $user = JWTAuth::parseToken()->authenticate();
         $product = Product::findOrFail($request->product_id);
 
+        // Check if requested quantity exceeds 20
+        $requestedQuantity = $request->quantity ?? 1;
+        if ($requestedQuantity > 20) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maximum quantity per item is 20'
+            ], 422);
+        }
+
         // Check if product is already in cart
         $cartItem = Cart::where('user_id', $user->id)
                         ->where('product_id', $product->id)
                         ->first();
 
+        // Calculate total quantity after adding new items
+        $currentTotalQuantity = Cart::where('user_id', $user->id)->sum('quantity');
+        $newTotalQuantity = $currentTotalQuantity + $requestedQuantity;
+
+        if ($cartItem) {
+            // If updating existing item, calculate new total
+            $newTotalQuantity = $currentTotalQuantity - $cartItem->quantity + $requestedQuantity;
+        }
+
+        // Check if total quantity would exceed 20
+        if ($newTotalQuantity > 20) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Maximum total items in cart cannot exceed 20',
+                'current_total' => $currentTotalQuantity,
+                'available_slots' => 20 - $currentTotalQuantity
+            ], 422);
+        }
+
         if ($cartItem) {
             // Update quantity if product already in cart
-            $cartItem->quantity += $request->quantity ?? 1;
+            $cartItem->quantity = $requestedQuantity;
             $cartItem->save();
         } else {
             // Create new cart item
             $cartItem = Cart::create([
                 'user_id' => $user->id,
                 'product_id' => $product->id,
-                'quantity' => $request->quantity ?? 1,
+                'quantity' => $requestedQuantity,
             ]);
         }
 
@@ -44,6 +72,7 @@ class CartController extends Controller
             'success' => true,
             'message' => 'Product added to cart successfully',
             'cart_item' => $cartItem->load('product'),
+            'total_items' => $newTotalQuantity
         ]);
     }
 

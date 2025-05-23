@@ -226,6 +226,16 @@
                                         </label>
                                     </div>
                                     <p class="text-xs text-gray-500">PDF, JPG, PNG up to 5MB</p>
+                                    <!-- Preview container -->
+                                    <div id="businessDocPreview" class="hidden mt-2">
+                                        <div class="flex items-center justify-center space-x-2">
+                                            <i class="fas fa-file-alt text-gray-400"></i>
+                                            <span id="businessDocName" class="text-sm text-gray-600"></span>
+                                            <button type="button" id="removeBusinessDoc" class="text-red-500 hover:text-red-700">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             <span id="retailer_business_registration_image_error" class="text-red-500 text-xs hidden"></span>
@@ -340,11 +350,7 @@
                 successDisplay.classList.remove('hidden');
                 
                 setTimeout(() => {
-                    if (isRetailer) {
-                        window.location.href = '/home'; // Redirect retailer to home
-                    } else {
                         window.location.href = '/verify-email'; // Redirect user to verification
-                    }
                 }, 2000);
             }
 
@@ -375,6 +381,8 @@
         });
 
         const data = await response.json();
+
+        localStorage.setItem("verification_token", data.token);
       
 
         if (!response.ok) {
@@ -433,6 +441,7 @@
                     });
 
                     const data = await response.json();
+                    localStorage.setItem("verification_token", data.token);
 
                     if (!response.ok) {
                         if (data.errors) {
@@ -441,13 +450,39 @@
                             displayGeneralError(data.message || 'Registration failed. Please try again.');
                         }
                     } else {
-                        displaySuccess('Retailer registration successful! Redirecting to home...', true);
+                        // Save the verification token to localStorage
+                        if (data.token) {
+                            localStorage.setItem("verification_token", data.token);
+                            console.log('Token saved to localStorage:', data.token);
+                        }
+                        
+                        displaySuccess('Retailer registration successful! Redirecting to verification...', true);
                         retailerForm.reset();
                     }
                 } catch (error) {
                     displayGeneralError('Network error. Please try again.');
                     console.error('Error:', error);
                 }
+            });
+
+            // Business registration document preview
+            const businessDocInput = document.getElementById('retailer_business_registration_image');
+            const businessDocPreview = document.getElementById('businessDocPreview');
+            const businessDocName = document.getElementById('businessDocName');
+            const removeBusinessDoc = document.getElementById('removeBusinessDoc');
+
+            businessDocInput.addEventListener('change', function() {
+                if (this.files && this.files[0]) {
+                    const file = this.files[0];
+                    businessDocName.textContent = file.name;
+                    businessDocPreview.classList.remove('hidden');
+                }
+            });
+
+            removeBusinessDoc.addEventListener('click', function() {
+                businessDocInput.value = '';
+                businessDocPreview.classList.add('hidden');
+                businessDocName.textContent = '';
             });
         });
     </script>

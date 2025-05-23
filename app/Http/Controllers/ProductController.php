@@ -9,6 +9,7 @@ use App\Models\Shop;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
+use App\Models\Review;
 
 class ProductController extends Controller
 {
@@ -79,56 +80,60 @@ class ProductController extends Controller
     /**
      * Get product by ID
      */
-    public function show(Request $request, $id)
-    {
-        $product = Product::where('product_id', $id)->first();
+   public function show(Request $request, $id)
+{
+    $product = Product::with(['reviews' => function($query) {
+        $query->latest()->limit(5)->with('user:id,name');
+    }])->where('product_id', $id)->first();
 
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
-        if ($request->user()->role === User::ROLE_RETAILER
-            && $product->retailer_id !== $request->user()->id) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Unauthorized to view this product'
-            ], 403);
-        }
-
-        if ($request->user()->role === User::ROLE_USER && !$product->is_active) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not available'
-            ], 404);
-        }
-
+    if (!$product) {
         return response()->json([
-            'success' => true,
-            'data'    => $product
-        ]);
+            'success' => false,
+            'message' => 'Product not found'
+        ], 404);
     }
 
-    public function getProductById($productId)
-    {
-        $product = Product::where('product_id', $productId)
-                          ->where('is_active', true)
-                          ->first();
-
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found or not available'
-            ], 404);
-        }
-
+    if ($request->user()->role === User::ROLE_RETAILER
+        && $product->retailer_id !== $request->user()->id) {
         return response()->json([
-            'success' => true,
-            'data'    => $product
-        ]);
+            'success' => false,
+            'message' => 'Unauthorized to view this product'
+        ], 403);
     }
+
+    if ($request->user()->role === User::ROLE_USER && !$product->is_active) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Product not available'
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'data'    => $product
+    ]);
+}
+
+   public function getProductById($productId)
+{
+    $product = Product::with(['reviews' => function($query) {
+        $query->latest()->limit(5)->with('user:id,name');
+    }])->where('product_id', $productId)
+      ->where('is_active', true)
+      ->first();
+
+    if (!$product) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Product not found or not available'
+        ], 404);
+    }
+
+    return response()->json([
+        'success' => true,
+        'data'    => $product
+    ]);
+}
 
     /**
      * Update a product (for retailer and admin)
@@ -141,6 +146,18 @@ class ProductController extends Controller
                 'success' => false,
                 'message' => 'Product not found'
             ], 404);
+        }
+
+        // Check if the user owns the product's shop
+        $shop = Shop::where('shop_id', $product->shop_id)
+                   ->where('user_id', $request->user()->id)
+                   ->first();
+
+        if (!$shop && $request->user()->role !== User::ROLE_ADMIN) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to update this product'
+            ], 403);
         }
 
         $validator = Validator::make($request->all(), [
@@ -176,6 +193,16 @@ class ProductController extends Controller
 
         // If new images were uploaded, process them
         if (isset($updateData['images'])) {
+            // Delete old images
+            if ($product->images) {
+                foreach ($product->images as $oldImage) {
+                    $oldImagePath = str_replace('/storage/', '', $oldImage);
+                    if (Storage::disk('public')->exists($oldImagePath)) {
+                        Storage::disk('public')->delete($oldImagePath);
+                    }
+                }
+            }
+
             $storedImageUrls = [];
             foreach ($request->file('images') as $file) {
                 $path = $file->store('products', 'public');
@@ -184,7 +211,26 @@ class ProductController extends Controller
             $updateData['images'] = $storedImageUrls;
         }
 
+        // Handle variants as JSON
+        if (isset($updateData['variants'])) {
+            $updateData['variants'] = json_encode($updateData['variants']);
+        }
+
+        // Handle specifications as JSON
+        if (isset($updateData['specifications'])) {
+            $updateData['specifications'] = json_encode($updateData['specifications']);
+        }
+
+        // Remove any null values
+        $updateData = array_filter($updateData, function($value) {
+            return $value !== null;
+        });
+
+        // Update the product
         $product->update($updateData);
+
+        // Refresh the product to get the updated data
+        $product->refresh();
 
         return response()->json([
             'success' => true,
@@ -371,59 +417,6 @@ class ProductController extends Controller
         ]);
     }
 
-    /**
-     * Update product rating (for users only)
-     */
-    public function updateRating(Request $request, $id)
-    {
-        if ($request->user()->role !== User::ROLE_USER) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Only users can rate products'
-            ], 403);
-        }
-
-        $validator = Validator::make($request->all(), [
-            'rating' => 'required|numeric|min:1|max:5',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Validation errors',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        $product = Product::where('product_id', $id)->first();
-
-        if (!$product) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Product not found'
-            ], 404);
-        }
-
-        $rating = $request->input('rating');
-        $currentRatings = $product->ratings ?? ['average' => 0, 'count' => 0];
-        $currentAverage = $currentRatings['average'];
-        $currentCount = $currentRatings['count'];
-
-        $newAverage = ($currentAverage * $currentCount + $rating) / ($currentCount + 1);
-
-        $product->update([
-            'ratings' => [
-                'average' => round($newAverage, 1),
-                'count' => $currentCount + 1
-            ]
-        ]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Product rating updated successfully',
-            'data' => $product
-        ]);
-    }
 
     /**
      * Get products by category
@@ -595,43 +588,272 @@ class ProductController extends Controller
     }
 
     // Add a new method to get products by shop
-public function getByShop(Request $request, $shopId)
-{
-    $shop = Shop::where('shop_id', $shopId)->first();
+    public function getByShop(Request $request, $shopId)
+    {
+        $shop = Shop::where('shop_id', $shopId)->first();
 
-    if (!$shop) {
+        if (!$shop) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Shop not found'
+            ], 404);
+        }
+
+        // For unauthenticated users, only show active products
+        if (!$request->user()) {
+            $products = Product::where('shop_id', $shopId)
+                             ->where('is_active', true)
+                             ->paginate($request->input('per_page', 10));
+
+            return response()->json([
+                'success' => true,
+                'data' => $products->items(),
+                'meta' => [
+                    'current_page' => $products->currentPage(),
+                    'per_page' => $products->perPage(),
+                    'total' => $products->total(),
+                    'has_next_page' => $products->hasMorePages(),
+                    'has_previous_page' => $products->currentPage() > 1,
+                ]
+            ]);
+        }
+
+        // For authenticated users, check authorization
+        if ($request->user()->role === User::ROLE_RETAILER && $shop->user_id !== $request->user()->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to view this shop\'s products'
+            ], 403);
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $products = Product::where('shop_id', $shopId)
+                          ->where('is_active', $request->user()->role !== User::ROLE_USER ? true : null)
+                          ->paginate($perPage);
+
         return response()->json([
-            'success' => false,
-            'message' => 'Shop not found'
-        ], 404);
+            'success' => true,
+            'data' => $products->items(),
+            'meta' => [
+                'current_page' => $products->currentPage(),
+                'per_page' => $products->perPage(),
+                'total' => $products->total(),
+                'has_next_page' => $products->hasMorePages(),
+                'has_previous_page' => $products->currentPage() > 1,
+            ]
+        ]);
     }
 
-    // Check authorization:
-    // - Admin can view any shop's products
-    // - Retailer can view only their own shop's products
-    // - Users can view any active shop's products
-    if ($request->user()->role === User::ROLE_RETAILER && $shop->user_id !== $request->user()->id) {
+    // Add these methods to ProductController
+
+    /**
+     * Add or update a product review
+     */
+    public function addReview(Request $request, $productId)
+    {
+        $validator = Validator::make($request->all(), [
+            'rating' => 'required|integer|min:1|max:5',
+            'comment' => 'nullable|string|max:500',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $product = Product::where('product_id', $productId)->first();
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        // Check if user already reviewed this product
+        $existingReview = Review::where('product_id', $productId)
+                               ->where('user_id', $request->user()->id)
+                               ->first();
+
+        if ($existingReview) {
+            // Update existing review
+            $existingReview->update([
+                'rating' => $request->rating,
+                'comment' => $request->comment
+            ]);
+            
+            $message = 'Review updated successfully';
+        } else {
+            // Create new review
+            Review::create([
+                'review_id' => 'REV' . Str::upper(Str::random(6)),
+                'product_id' => $productId,
+                'user_id' => $request->user()->id,
+                'rating' => $request->rating,
+                'comment' => $request->comment,
+                'is_approved' => true
+            ]);
+            
+            $message = 'Review added successfully';
+        }
+
         return response()->json([
-            'success' => false,
-            'message' => 'Unauthorized to view this shop\'s products'
-        ], 403);
+            'success' => true,
+            'message' => $message,
+            'data' => $product->fresh() // Return product with updated ratings
+        ]);
     }
 
-    $perPage = $request->input('per_page', 10);
-    $products = Product::where('shop_id', $shopId)
-                      ->where('is_active', $request->user()->role !== User::ROLE_USER ? true : null)
-                      ->paginate($perPage);
+    /**
+     * Delete a product review
+     */
+    public function deleteReview(Request $request, $productId)
+    {
+        $product = Product::where('product_id', $productId)->first();
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
 
-    return response()->json([
-        'success' => true,
-        'data' => $products->items(),
-        'meta' => [
-            'current_page' => $products->currentPage(),
-            'per_page' => $products->perPage(),
-            'total' => $products->total(),
-            'has_next_page' => $products->hasMorePages(),
-            'has_previous_page' => $products->currentPage() > 1,
-        ]
-    ]);
-}
+        $review = Review::where('product_id', $productId)
+                       ->where('user_id', $request->user()->id)
+                       ->first();
+
+        if (!$review) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Review not found'
+            ], 404);
+        }
+
+        $review->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Review deleted successfully',
+            'data' => $product->fresh() // Return product with updated ratings
+        ]);
+    }
+
+    /**
+     * Get product reviews
+     */
+    public function getReviews($productId, Request $request)
+    {
+        $product = Product::where('product_id', $productId)->first();
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        $perPage = $request->input('per_page', 10);
+        $reviews = $product->reviews()
+                          ->with('user:id,name')
+                          ->paginate($perPage);
+
+        return response()->json([
+            'success' => true,
+            'data' => $reviews->items(),
+            'meta' => [
+                'current_page' => $reviews->currentPage(),
+                'per_page' => $reviews->perPage(),
+                'total' => $reviews->total(),
+                'has_next_page' => $reviews->hasMorePages(),
+                'has_previous_page' => $reviews->currentPage() > 1,
+            ]
+        ]);
+    }
+
+    /**
+     * Add or update product discount
+     */
+    public function setDiscount(Request $request, $productId)
+    {
+        $validator = Validator::make($request->all(), [
+            'discount_amount' => 'required|numeric|min:0',
+            'is_discount' => 'required|boolean'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation errors',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        $product = Product::where('product_id', $productId)->first();
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        // Check if the user owns the product's shop
+        $shop = Shop::where('shop_id', $product->shop_id)
+                   ->where('user_id', $request->user()->id)
+                   ->first();
+
+        if (!$shop && $request->user()->role !== User::ROLE_ADMIN) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to update this product'
+            ], 403);
+        }
+
+        $product->update([
+            'is_discount' => $request->is_discount,
+            'discount_amount' => $request->discount_amount
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Discount updated successfully',
+            'data' => $product
+        ]);
+    }
+
+    /**
+     * Remove product discount
+     */
+    public function removeDiscount(Request $request, $productId)
+    {
+        $product = Product::where('product_id', $productId)->first();
+        if (!$product) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Product not found'
+            ], 404);
+        }
+
+        // Check if the user owns the product's shop
+        $shop = Shop::where('shop_id', $product->shop_id)
+                   ->where('user_id', $request->user()->id)
+                   ->first();
+
+        if (!$shop && $request->user()->role !== User::ROLE_ADMIN) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Unauthorized to update this product'
+            ], 403);
+        }
+
+        $product->update([
+            'is_discount' => false,
+            'discount_amount' => null
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Discount removed successfully',
+            'data' => $product
+        ]);
+    }
 }

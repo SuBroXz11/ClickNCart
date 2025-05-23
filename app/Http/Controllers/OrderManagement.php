@@ -25,7 +25,7 @@ class OrderManagement extends Controller
                 $query->with(['product', 'shop']);
             }])
             ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc()')
+            ->orderBy('created_at', 'desc')
             ->paginate($request->per_page ?? 10);
 
         return response()->json([
@@ -275,7 +275,7 @@ public function getShopOrders(Request $request)
 
         $request->validate([
             'action' => 'required|in:approve,reject',
-            'reason' => 'required_if:action,reject|string|max:500'
+            'reason' => 'required_if:action,reject|nullable|string|max:500'
         ]);
 
         if ($orderItem->cancel_requested != 'pending') {

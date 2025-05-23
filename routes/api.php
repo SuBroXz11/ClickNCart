@@ -43,10 +43,11 @@ Route::middleware([JwtMiddleware::class . ':retailer,admin'])->group(function ()
     Route::post('/products', [ProductController::class, 'store']);
     Route::put('/products/{id}', [ProductController::class, 'update']);
     Route::delete('/products/{id}', [ProductController::class, 'destroy']);
-    Route::get('/shop/{shopId}', [ProductController::class, 'getByShop']);
     Route::get('/retailer/products', [ProductController::class, 'getRetailerProducts']);
     Route::get('/retailer/products/{retailerId}', [ProductController::class, 'getRetailerProducts']);
 });
+
+Route::get('/shop/{shopId}', [ProductController::class, 'getByShop']);
 
 Route::get('/product/id/{productId}', [ProductController::class, 'getProductById']);
 
@@ -59,9 +60,19 @@ Route::middleware([JwtMiddleware::class . ':user,retailer,admin'])->group(functi
     Route::get('/products/{id}', [ProductController::class, 'show']);
 });
 
-Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
-    Route::post('/products/{id}/rate', [ProductController::class, 'updateRating']);
-});
+
+ Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
+        Route::post('/{productId}/reviews', [ProductController::class, 'addReview']);
+        Route::delete('/{productId}/reviews', [ProductController::class, 'deleteReview']);
+    });
+    
+    Route::get('/{productId}/reviews', [ProductController::class, 'getReviews']);
+    
+    // Discount routes
+    Route::middleware([JwtMiddleware::class . ':retailer,admin'])->group(function () {
+        Route::post('/products/{productId}/discount', [ProductController::class, 'setDiscount']);
+        Route::delete('/products/{productId}/discount', [ProductController::class, 'removeDiscount']);
+    });
 
 
 
@@ -77,11 +88,13 @@ Route::middleware([JwtMiddleware::class . ':user'])->group(function () {
 Route::middleware([JwtMiddleware::class .':retailer'])->group(function () {
     Route::post('/shops', [ShopController::class, 'store']);
     Route::get('/shops/user/{userId?}', [ShopController::class, 'getUserShops']);
-    Route::get('/shops/all', [ShopController::class, 'getAllShops'])->middleware('admin');
+    
     Route::get('/shops/{id}', [ShopController::class, 'show']);
     Route::put('/shops/{id}', [ShopController::class, 'update']);
     Route::delete('/shops/{id}', [ShopController::class, 'destroy']);
 });
+
+Route::get('/shops/all', [ShopController::class, 'getAllShops']);
 
 Route::prefix('payment')->group(function () {
     Route::post('/create', [PaymentController::class, 'createPayment']);
